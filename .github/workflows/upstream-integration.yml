@@ -47,6 +47,13 @@ jobs:
         run: ruff check src tests
       - name: Execute real TUM model and verify StratLab source contract
         run: pytest -q tests/upstream
+      - name: Verify pinned F1-StratLab runtime prerequisites without running models
+        run: python -m apex_f1.integrations.stratlab_preflight > stratlab-preflight.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stratlab-no-llm-preflight
+          path: stratlab-preflight.json
+          retention-days: 14
       - name: Save TUM output as workflow artifact
         run: apex-f1 tum-compare > tum-reference-results.json
       - uses: actions/upload-artifact@v4
