@@ -192,7 +192,7 @@ class HistoricalRace:
     def from_json(cls, obj: dict[str, Any]) -> HistoricalRace:
         if not isinstance(obj, dict) or obj.get("schema_version") != SCHEMA_VERSION:
             raise ValueError("Unsupported historical race schema")
-        if obj.get("source") != SOURCE:
+        if obj.get("source") not in ALLOWED_SOURCES:
             raise ValueError("Unrecognized historical race data source")
         rows = obj.get("laps")
         if not isinstance(rows, list):

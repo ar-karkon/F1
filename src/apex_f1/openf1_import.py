@@ -22,7 +22,7 @@ USER_AGENT = "ApexF1-Research/0.1 (historical replay)"
 
 def _utc_seconds(value: str) -> float:
     if not isinstance(value, str):
-        raise ValueError("Missing event timestamp")
+        raise TypeError("Missing event timestamp")
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         raise ValueError("OpenF1 timestamp must include timezone")
@@ -47,7 +47,7 @@ def _get_json(endpoint: str, **query: object) -> list[dict]:
         raise RuntimeError(f"OpenF1 {endpoint} response exceeded size limit")
     result = json.loads(payload)
     if not isinstance(result, list):
-        raise ValueError(f"Unexpected OpenF1 response from {endpoint}")
+        raise TypeError(f"Unexpected OpenF1 response from {endpoint}")
     return result
 
 
