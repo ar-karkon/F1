@@ -24,6 +24,7 @@ from apex_f1.llm import (
     LLMUpstreamError,
     explain_snapshot,
 )
+from apex_f1.opponent import PitModel, model_file
 from apex_f1.replay import HistoricalRace
 from apex_f1.simulator import RaceState, evaluate_strategies
 
@@ -120,6 +121,54 @@ def historical_llm_brief(
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except LLMUpstreamError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get("/api/v1/opponent/status")
+def opponent_model_status() -> dict:
+    path = model_file()
+    if not path.is_file():
+        return {
+            "configured": False,
+            "mode": "NO_LOCAL_PIT_BASELINE",
+            "setup": "Import training races and run apex-f1 fit-pit-model",
+        }
+    try:
+        model = PitModel.load(path)
+    except (ValueError, TypeError, KeyError, OSError) as exc:
+        raise HTTPException(status_code=422, detail="Invalid local pit model") from exc
+    return {
+        "configured": True,
+        "mode": "HISTORICAL_EMPIRICAL_PIT_WINDOW_BASELINE",
+        "model_version": model.version,
+        "training_races": model.training_races,
+        "training_example_count": model.example_count,
+        "horizon_driver_laps": model.horizon,
+        "validated_on_holdout": False,
+        "note": "Only model presence; see offline backtest results before claims.",
+    }
+
+
+@app.get("/api/v1/historical/{year}/{round_number}/opponent-pit/{lap}")
+def opponent_pit_window(
+    year: int = Path(ge=2018, le=2100),
+    round_number: int = Path(ge=1, le=30),
+    lap: int = Path(ge=1, le=100),
+) -> dict:
+    """Read a pre-fitted local baseline. No training, future data or LLM calls."""
+    path = model_file()
+    if not path.is_file():
+        raise HTTPException(
+            status_code=503,
+            detail="Train from other historical races first: apex-f1 fit-pit-model",
+        )
+    try:
+        model = PitModel.load(path)
+        snapshot = _load_local_race(year, round_number).snapshot(lap)
+        return model.predict_snapshot(snapshot)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (TypeError, KeyError, OSError) as exc:
+        raise HTTPException(status_code=422, detail="Invalid local pit model") from exc
 
 
 @app.get("/integrations")

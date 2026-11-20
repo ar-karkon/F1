@@ -54,6 +54,27 @@ def main() -> None:
         if name == "replay-lap":
             historical.add_argument("--lap", type=int, required=True)
 
+    fit = subparsers.add_parser(
+        "fit-pit-model", help="Train an auditable empirical pit-window baseline on local races"
+    )
+    fit.add_argument(
+        "--train", nargs="+", required=True, metavar="YEAR:ROUND",
+        help="Source race identifiers, e.g. --train 2023:1 2023:2 2023:3",
+    )
+    fit.add_argument("--horizon", type=int, default=3, choices=range(1, 6))
+    fit.add_argument("--output", default=None)
+
+    for name, help_text in (
+        ("predict-pit", "Estimate pit-window frequencies from a held-out lap"),
+        ("backtest-pit", "Compare model Brier score with training base rate on a new race"),
+    ):
+        command = subparsers.add_parser(name, help=help_text)
+        command.add_argument("--year", type=int, default=2024)
+        command.add_argument("--round", type=int, default=1)
+        command.add_argument("--model", default=None)
+        if name == "predict-pit":
+            command.add_argument("--lap", type=int, required=True)
+
     args = parser.parse_args()
     if args.command == "demo":
         print(json.dumps(evaluate_strategies(RaceState(), args.trials, args.seed), indent=2))
@@ -74,6 +95,51 @@ def main() -> None:
         from apex_f1.integrations.stratlab import probe_stratlab
         from apex_f1.integrations.tum_basic import probe_tum
         print(json.dumps({"tum": probe_tum(), "stratlab": probe_stratlab()}, indent=2))
+    elif args.command == "fit-pit-model":
+        from pathlib import Path
+
+        from apex_f1.historical_import import race_file
+        from apex_f1.opponent import model_file, train_pit_model
+        from apex_f1.replay import HistoricalRace
+
+        records = []
+        try:
+            for reference in args.train:
+                year, round_number = (int(part) for part in reference.split(":"))
+                records.append(HistoricalRace.load(race_file(year, round_number)))
+            trained = train_pit_model(records, args.horizon)
+        except (OSError, ValueError, TypeError) as exc:
+            parser.exit(1, f"Pit model training failed: {exc}\n")
+        target = Path(args.output) if args.output else model_file()
+        trained.save(target)
+        print(json.dumps({
+            "mode": "EMPIRICAL_BASELINE_FITTED",
+            "model_file": str(target),
+            "training_races": trained.training_races,
+            "training_example_count": trained.example_count,
+            "training_positive_examples": trained.event_count,
+            "training_base_rate": round(trained.global_prior, 4),
+            "horizon_driver_laps": trained.horizon,
+            "note": "In-sample training stats are not evidence of predictive accuracy.",
+        }, indent=2))
+    elif args.command in ("predict-pit", "backtest-pit"):
+        from pathlib import Path
+
+        from apex_f1.historical_import import race_file
+        from apex_f1.opponent import PitModel, model_file
+        from apex_f1.replay import HistoricalRace
+
+        path = Path(args.model) if args.model else model_file()
+        try:
+            model = PitModel.load(path)
+            holdout = HistoricalRace.load(race_file(args.year, args.round))
+            if args.command == "predict-pit":
+                result = model.predict_snapshot(holdout.snapshot(args.lap))
+            else:
+                result = model.backtest(holdout)
+        except (OSError, ValueError, TypeError) as exc:
+            parser.exit(1, f"Pit model evaluation failed: {exc}\n")
+        print(json.dumps(result, indent=2))
     elif args.command == "import-race":
         from apex_f1.historical_import import import_to_file
         from apex_f1.replay import HistoricalRace

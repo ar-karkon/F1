@@ -1,4 +1,4 @@
-.PHONY: install test upstream-test lint demo run export-example import-history
+.PHONY: install test upstream-test lint demo run export-example import-history pit-benchmark
 install:
 	python -m pip install -e ".[dev]"
 
@@ -23,3 +23,7 @@ export-example:
 import-history:
 	python -m pip install -e ".[dev]"
 	apex-f1 import-race --year 2024 --round 1 --provider openf1
+
+pit-benchmark:
+	apex-f1 fit-pit-model --train 2023:1 2023:2 2023:3
+	apex-f1 backtest-pit --year 2024 --round 1

@@ -42,10 +42,12 @@
 
 ## Phase 3 — opponent intelligence
 
-- [ ] Pit timing hazard model with team/driver priors.
+- [x] Empirical smoothed pit-window baseline from earlier races, with 3-driver-lap target and holdout Brier evaluation.
+- [ ] Train team/driver-conditioned pit timing hazard model after dataset validation.
 - [ ] Behavioural features: stint transitions, traffic response, safety-car response.
 - [ ] Probability calibration (Brier score, reliability diagrams).
-- [ ] Compare with historical/base-rate-only baselines.
+- [x] Compute out-of-sample Brier vs a global historical training base rate.
+- [ ] Extend time-split evaluation across multiple circuits/seasons and compare richer baselines.
 
 **Gate:** consistently useful backtest out of sample and calibrated confidence.
 

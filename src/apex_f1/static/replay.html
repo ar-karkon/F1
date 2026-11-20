@@ -19,6 +19,14 @@ header{display:flex;justify-content:space-between;gap:16px;align-items:center;ma
 .ai-result ul{margin:8px 0 16px;padding-left:20px}
 .ai-result li{margin-bottom:8px}
 .ai-warning{color:#e2c397;font-size:11px}
+.pit-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-top:16px}
+.pit-driver{background:#152234;border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.pit-number{font-size:22px;color:var(--lime);font-weight:850;letter-spacing:-.04em}
+.pit-driver strong{font-size:14px}
+.pit-bar{background:#28364a;height:7px;border-radius:20px;overflow:hidden;margin:10px 0}
+.pit-fill{height:100%;background:linear-gradient(90deg,#739d32,#b8e75b)}
+@media(max-width:830px){.pit-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:450px){.pit-list{grid-template-columns:1fr}}
 @media(max-width:1000px){.drivers{grid-template-columns:repeat(3,1fr)}}@media(max-width:720px){.wrap{padding:23px 16px 45px}.drivers{grid-template-columns:repeat(2,1fr)}.dashboard{grid-template-columns:1fr}.controls{grid-template-columns:1fr}}@media(max-width:420px){.drivers{grid-template-columns:1fr}}
 </style></head><body><div class="wrap">
 <header><div class="brand"><span>A/</span> APEX INTELLIGENCE</div><nav><a href="/">Strategy Lab</a><a href="/integrations">Integration Lab</a><a href="/docs">API</a><a href="https://github.com/ar-karkon/F1">GitHub</a></nav></header>
@@ -34,6 +42,13 @@ header{display:flex;justify-content:space-between;gap:16px;align-items:center;ma
 <div class="controls"><div><label for="lap">Scrub through leader laps</label><input type="range" id="lap" min="1" max="57" value="1"></div><button id="next" type="button">Next lap →</button></div>
 <p id="snapshot-status" class="meta" role="status" aria-live="polite"></p>
 <h2 style="margin-top:24px">Last-known driver state</h2><p class="meta">These cards may represent different last-completed laps. The positions are last reported—not an inferred synchronized classification.</p><div id="drivers" class="drivers"></div>
+<section class="panel" style="margin-top:22px" aria-labelledby="pit-title">
+<div class="row"><h2 id="pit-title">Opponent Pit Window · Empirical Baseline</h2><span class="chip" id="pit-ready">Local baseline only</span></div>
+<p class="meta">Frequency of a recorded pit event within the next three driver-completed laps, estimated only from *earlier races*. No LLM probabilities or real pit strategy recommendations. Source fields may have retrospective corrections.</p>
+<div id="pit-status" role="status" class="meta" aria-live="polite">Checking locally fitted model…</div>
+<div id="pit-output" class="pit-list" aria-live="polite"></div>
+<p class="ai-warning">⚠ These are out-of-sample research probabilities, not calibrated real-time estimates. Use the held-out Brier benchmark to judge whether this baseline improves on historical base rate.</p>
+</section>
 <section class="panel" style="margin-top:22px" aria-labelledby="ai-title">
 <div class="row"><h2 id="ai-title">AI Race Engineer · Historical Brief</h2><span id="ai-ready" class="chip">LLM opt-in only</span></div>
 <p class="meta">A model can explain observable historical lap data, not predict the next pit stop or optimize strategy. Data leaves your machine for your configured LLM provider only when you press Generate.</p>
@@ -48,7 +63,7 @@ header{display:flex;justify-content:space-between;gap:16px;align-items:center;ma
 </main></div>
 <script>
 const $=id=>document.getElementById(id);
-let available=[],lap=null,nonce=0,briefNonce=0,llmEnabled=false;
+let available=[],lap=null,nonce=0,briefNonce=0,llmEnabled=false,pitNonce=0,pitReady=false;
 const format=v=>v===null||v===undefined?"Unknown":String(v);
 async function load(){
  try{
@@ -75,6 +90,7 @@ function makeDriver(d){
 async function show(index){
  if(index<0||index>=available.length)return;
  const selected=available[index];const token=++nonce;
+ pitNonce++;
  briefNonce++;$("ai-output").hidden=true;$("ai-output").replaceChildren();$("ai-status").textContent="Generate an explanation for the selected lap only.";
  $("snapshot-status").textContent="Loading as-of snapshot…";$("next").disabled=true;
  try{
@@ -86,7 +102,51 @@ async function show(index){
  $("drivers").replaceChildren(...x.drivers.map(makeDriver));
  $("snapshot-status").textContent=x.n_completed_records_visible+" completed records visible by the cutoff; future rows excluded.";
  $("next").disabled=index>=available.length-1;
+ if(pitReady)loadPit(selected);
  }catch(e){$("snapshot-status").textContent=e.message;$("next").disabled=false;}
+}
+async function checkPit(){
+ try{
+ const r=await fetch("/api/v1/opponent/status");const data=await r.json();
+ pitReady=Boolean(r.ok&&data.configured);
+ $("pit-ready").textContent=pitReady?"Baseline ready · H="+data.horizon_driver_laps:"Model not yet trained";
+ $("pit-status").textContent=pitReady
+   ? "Training races: "+data.training_races.join(", ")+" · Select a leader lap."
+   : "Run 2023 imports then: apex-f1 fit-pit-model --train 2023:1 2023:2 2023:3";
+ if(pitReady&&lap!==null)loadPit(available[lap]);
+ }catch(e){$("pit-status").textContent="Could not check baseline model status: "+e.message;}
+}
+async function loadPit(selected){
+ if(!pitReady)return;
+ const token=++pitNonce;
+ $("pit-status").textContent="Calculating history-based frequencies for leader lap "+selected+"…";
+ try{
+ const r=await fetch("/api/v1/historical/2024/1/opponent-pit/"+selected);
+ const data=await r.json();
+ if(!r.ok)throw Error(typeof data.detail==="string"?data.detail:"Prediction unavailable");
+ if(token!==pitNonce)return;
+ const list=$("pit-output");list.replaceChildren();
+ const top=data.predictions.slice(0,9);
+ top.forEach(item=>{
+  const card=document.createElement("div");card.className="pit-driver";
+  const title=document.createElement("strong");title.textContent=item.driver;
+  const value=document.createElement("div");value.className="pit-number";
+  const pct=item.pit_within_next_n_driver_laps_probability*100;
+  value.textContent=pct.toFixed(1)+"%";
+  const line=document.createElement("div");line.className="pit-bar";
+  const fill=document.createElement("div");fill.className="pit-fill";
+  fill.style.width=Math.min(100,Math.max(1,pct))+"%";line.append(fill);
+  const note=document.createElement("p");note.className="meta";
+  note.textContent=(item.last_known_compound||"UNKNOWN")+" · tyre age "+
+    (item.last_known_tyre_life===null?"unknown":item.last_known_tyre_life)+
+    " · bin samples "+item.support_count_specific_bin;
+  card.append(title,value,line,note);list.append(card);
+ });
+ $("pit-status").textContent=
+   data.predictions.length+" observed drivers · model trained on "+
+   data.training_races.join(", ")+" · target next "+data.predictions[0]?.horizon_driver_laps+
+   " driver laps (not a recommendation)";
+ }catch(e){if(token===pitNonce)$("pit-status").textContent=e.message;}
 }
 async function checkAI(){
  try{
@@ -125,5 +185,5 @@ async function generateBrief(){
 $("generate-ai").addEventListener("click",generateBrief);
 $("lap").addEventListener("input",e=>show(Number(e.target.value)));
 $("next").addEventListener("click",()=>{if(lap!==null&&lap<available.length-1){$("lap").value=lap+1;show(lap+1);}});
-checkAI();load();
+checkAI();load();checkPit();
 </script></body></html>

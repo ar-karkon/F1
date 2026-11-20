@@ -21,6 +21,7 @@
 - **F1-StratLab source contract probe**, not a running agent integration.
 - **OpenF1/FastF1 historical race replay:** completed-lap snapshots with time-of-observation cutoff to avoid seeing future laps. OpenF1 is the default public research source.
 - **Optional AI Race Engineer brief:** human-triggered explanatory LLM summaries of a single as-of historical snapshot with validated evidence IDs; disabled unless you opt in with server environment variables.
+- **Opponent Pit Window Baseline:** transparent, CPU-only, smoothed historical pit-window probabilities trained on separate races, with held-out race Brier score and no LLM-derived numbers.
 
 ## Quick start
 
@@ -65,6 +66,38 @@ curl -s -X POST http://127.0.0.1:8000/api/v1/strategy/evaluate \
 ```
 
 Output includes expected **remaining seconds**, p10/p90 model bands, expected delta, and probability of being fastest **only among the modelled candidates**. This is not position, podium or victory probability.
+
+## Opponent Pit Window baseline (empirical historical benchmark)
+
+A CPU-only auditable baseline predicts the frequency of a recorded pit event
+within the next **three driver-completed laps**, from only previous observations
+about tyre compound, tyre age and race stage. Training happens on separate,
+earlier historical races and is evaluated **out of sample** against the
+overall historical event rate. It is NOT an AI-engineered real pit strategy
+recommendation or model of team intent.
+
+```bash
+git pull
+python -m pip install -e ".[dev]"
+
+# Public historical OpenF1 research data, never committed:
+for round in 1 2 3; do
+  apex-f1 import-race --year 2023 --round "$round" --provider openf1
+done
+apex-f1 import-race --year 2024 --round 1 --provider openf1
+
+# Train exclusively on 2023, evaluate Bahrain 2024 as an unseen race:
+apex-f1 fit-pit-model --train 2023:1 2023:2 2023:3
+apex-f1 backtest-pit --year 2024 --round 1
+apex-f1 predict-pit --year 2024 --round 1 --lap 20
+apex-f1 serve
+```
+
+Open `http://localhost:8000/replay`, select a lap and inspect the
+Opponent Pit Window panel. All raw timing stays in `data/derived/` locally.
+GitHub Actions measures actual 2024 Bahrain holdout performance and stores
+**only aggregate benchmark metrics**. The explicit time split protects
+against training on the event being assessed. See [pit baseline methodology](docs/PIT_WINDOW_BASELINE.md).
 
 ## SovInfra API setup (recommended)
 
@@ -203,6 +236,7 @@ src/apex_f1/
   historical_import.py    Provider-aware historical timing import
   openf1_import.py        OpenF1 anonymous historical importer
   replay.py               Leakage-aware as-of historical race snapshots
+  opponent.py             Empirical pit window predictor and held-out benchmark
   cli.py                  Local commands
   static/index.html       Interactive strategy dashboard
 tests/                    Simulation and API regression tests
@@ -231,6 +265,7 @@ Open issues should identify the actual dataset, evaluation split, reference base
 - [External open-source projects](docs/UPSTREAM_PROJECTS.md)
 - [Integration progress and limits](docs/INTEGRATION_PROGRESS.md)
 - [Historic replay and timing-cutoff methodology](docs/HISTORICAL_REPLAY.md)
+- [Opponent pit-window baseline methodology](docs/PIT_WINDOW_BASELINE.md)
 - [OpenF1 access and data rights](docs/OPENF1_DATA_RIGHTS.md)
 
 **License:** MIT for code authored in this repository; upstream packages and datasets retain their own terms. No affiliation with Formula 1 or any team is implied.
