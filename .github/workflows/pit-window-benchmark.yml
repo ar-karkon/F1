@@ -36,6 +36,8 @@ jobs:
       - name: Import held-out 2024 Japan race
         run: |
           apex-f1 import-race --year 2024 --round 4 --provider openf1             > /tmp/heldout-import.json
+      - name: Audit timestamp assignment for real Japanese pit stops
+        run: python scripts/audit_openf1_pits.py --year 2024 --round 4
       - name: Train empirical baseline only on earlier 2024 weekends
         run: apex-f1 fit-pit-model --train 2024:1 2024:2 2024:3 --horizon 3
       - name: Compute held-out Brier score and calibration
