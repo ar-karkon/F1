@@ -36,7 +36,7 @@ apex-f1 demo --trials 400
 apex-f1 serve
 ```
 
-Open **http://127.0.0.1:8000** for the dashboard, or **http://127.0.0.1:8000/docs** for the API.
+Open **http://127.0.0.1:8000** for the strategy dashboard, **http://127.0.0.1:8000/integrations** for the TUM / StratLab research laboratory, or **http://127.0.0.1:8000/docs** for API docs. The TUM panel requires its checked-out submodule and `.[tum]` extra to execute.
 
 Docker alternative:
 

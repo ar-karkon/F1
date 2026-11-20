@@ -10,6 +10,7 @@
 - [x] Initial remote GitHub CI successfully passed on Python 3.10 and 3.12.
 - [x] TUM basic full-race kernel adapter in an isolated subprocess, with dedicated upstream CI.
 - [x] F1-StratLab source-level run_lap contract verification (not yet executed).
+- [x] Browser-based Integration Lab for source readiness and TUM reference race comparisons.
 - [ ] Verify dedicated upstream CI run and stored JSON artifact.
 - [ ] Execute F1-StratLab no-llm profile in its own isolated environment with historical data.
 - [ ] Validate telemetry pipeline integration with adapter contract tests.

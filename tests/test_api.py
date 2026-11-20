@@ -32,3 +32,10 @@ def test_invalid_lap_rejected():
         json={"current_lap": 60, "total_laps": 57},
     )
     assert result.status_code == 422
+
+
+def test_integration_dashboard_page():
+    response = client.get("/integrations")
+    assert response.status_code == 200
+    assert "Real upstream code." in response.text
+    assert "TUM" in response.text

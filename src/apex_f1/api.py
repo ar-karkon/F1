@@ -43,6 +43,11 @@ def dashboard() -> FileResponse:
     return FileResponse(str(files("apex_f1").joinpath("static/index.html")))
 
 
+@app.get("/integrations")
+def integrations_dashboard() -> FileResponse:
+    return FileResponse(str(files("apex_f1").joinpath("static/integrations.html")))
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "version": __version__, "mode": "research"}
