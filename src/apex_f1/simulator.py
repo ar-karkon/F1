@@ -5,8 +5,8 @@ validated physical model. No finishing-position or podium claims are produced.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import random
+from dataclasses import asdict, dataclass
 from statistics import mean
 from typing import Any
 
