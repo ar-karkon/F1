@@ -37,10 +37,13 @@ class LLMSettings:
         }
         return cls(
             enabled=enabled,
-            api_key=os.environ.get("APEX_LLM_API_KEY", ""),
-            model=os.environ.get("APEX_LLM_MODEL", "").strip(),
+            api_key=(
+                os.environ.get("APEX_LLM_API_KEY")
+                or os.environ.get("SOVINFRA_API_KEY", "")
+            ),
+            model=os.environ.get("APEX_LLM_MODEL", "sovapi").strip(),
             base_url=os.environ.get(
-                "APEX_LLM_BASE_URL", "https://api.openai.com/v1"
+                "APEX_LLM_BASE_URL", "https://api.sovinfra.ai/v1"
             ).strip().rstrip("/"),
             timeout_seconds=15.0,
         )
@@ -225,4 +228,57 @@ def explain_snapshot(
             "Only the selected completed-lap historical snapshot was submitted.",
             "Historical source fields may include retrospective corrections.",
         ],
+    }
+
+
+def smoke_connection(settings: LLMSettings | None = None) -> dict[str, Any]:
+    """Opt-in minimal connection test: NEVER sends racing data to the provider.
+
+    An explicit CLI action (apex-f1 llm-smoke) initiates this request; it can
+    consume paid provider tokens. No API key, response text or prompt is logged.
+    """
+    config = settings or LLMSettings.from_env()
+    if not config.configured():
+        raise LLMNotConfigured(
+            "LLM disabled or incomplete. Set APEX_LLM_ENABLED=true and a private API key."
+        )
+    request = Request(
+        config.endpoint(),
+        data=json.dumps({
+            "model": config.model,
+            "messages": [{"role": "user", "content": "Reply with the single word OK."}],
+            "temperature": 0,
+            "max_tokens": 24,
+        }).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {config.api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=config.timeout_seconds) as response:
+            data = response.read(100_001)
+        if len(data) > 100_000:
+            raise LLMUpstreamError("Provider response too large")
+        parsed = json.loads(data)
+        reply = parsed["choices"][0]["message"]["content"]
+        if not isinstance(reply, str) or not reply.strip():
+            raise LLMUpstreamError("LLM provider returned empty or unsupported text")
+    except LLMUpstreamError:
+        raise
+    except (URLError, OSError, TimeoutError) as exc:
+        # Don't expose HTTP exception bodies or authorization headers.
+        raise LLMUpstreamError("Connection to LLM provider failed") from exc
+    except (ValueError, KeyError, IndexError, TypeError) as exc:
+        raise LLMUpstreamError("LLM returned an unexpected response shape") from exc
+    return {
+        "status": "OK",
+        "endpoint_host": urlsplit(config.base_url).hostname,
+        "model_requested": config.model,
+        "message_received": True,
+        "test_type": "EXPLICIT_MINIMAL_TEXT_ONLY",
+        "historical_data_sent": False,
+        "note": "Only a short test prompt was sent; historical AI briefs require separate evaluation.",
     }

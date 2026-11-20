@@ -92,3 +92,17 @@ To progress beyond historical explanation: validate F1-StratLab
 chronological pit-decision baseline, and compare it with the LLM's
 non-predictive commentary. LLM text is **not** a substitute for quantitative
 simulation or opponent behavior models.
+
+
+## SovInfra official provider preset
+
+Default server-side configuration is now `sovapi` through
+`https://api.sovinfra.ai/v1` when an LLM is enabled. Both `sovapi` and the
+direct model IDs `qwen3.8-27b` / `gemma-4-31b` are documented by SovInfra.
+Use `SOVINFRA_API_KEY` or `APEX_LLM_API_KEY` in your private environment
+(not in this repository).
+
+See [SOVINFRA_SETUP.md](SOVINFRA_SETUP.md) for secure commands.
+The private `SOVINFRA_API_KEY` variable is only a **fallback** if
+`APEX_LLM_API_KEY` is absent. The optional `apex-f1 llm-smoke` command
+sends a short generic test prompt, never racing data or the full replay.

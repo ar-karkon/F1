@@ -32,6 +32,9 @@ def main() -> None:
     tum.add_argument("--next-compound", choices=["A3", "A4", "A5"], default="A3")
 
     subparsers.add_parser("integrations", help="Inspect pinned upstream source readiness")
+    subparsers.add_parser(
+        "llm-smoke", help="Explicitly test configured LLM API without sending any race data"
+    )
 
     for name, help_text in (
         ("import-race", "Fetch historical FastF1 laps into ignored local storage"),
@@ -60,6 +63,13 @@ def main() -> None:
     elif args.command == "tum-compare":
         from apex_f1.integrations.tum_basic import compare_tum_example
         print(json.dumps(compare_tum_example(args.pit_laps, args.start_compound, args.next_compound), indent=2))
+    elif args.command == "llm-smoke":
+        from apex_f1.llm import LLMNotConfigured, LLMUpstreamError, smoke_connection
+
+        try:
+            print(json.dumps(smoke_connection(), indent=2))
+        except (LLMNotConfigured, LLMUpstreamError) as exc:
+            parser.exit(1, f"LLM connection test failed: {exc}\n")
     elif args.command == "integrations":
         from apex_f1.integrations.stratlab import probe_stratlab
         from apex_f1.integrations.tum_basic import probe_tum

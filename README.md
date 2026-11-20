@@ -66,6 +66,38 @@ curl -s -X POST http://127.0.0.1:8000/api/v1/strategy/evaluate \
 
 Output includes expected **remaining seconds**, p10/p90 model bands, expected delta, and probability of being fastest **only among the modelled candidates**. This is not position, podium or victory probability.
 
+## SovInfra API setup (recommended)
+
+Apex now defaults to the verified SovInfra OpenAI-compatible Chat Completions
+API: `https://api.sovinfra.ai/v1` with model `sovapi` (automatic routing).
+You may override `APEX_LLM_MODEL` with `gemma-4-31b` or `qwen3.8-27b`.
+
+Never commit or paste a real API key into the repository. If a key has
+already been shared, revoke it and issue a new one before proceeding.
+On Linux/macOS, enter a fresh key **without echoing it or putting it in shell history**:
+
+```bash
+git pull
+read -rsp "New SovInfra API key: " SOVINFRA_API_KEY; echo
+export SOVINFRA_API_KEY
+export APEX_LLM_ENABLED=true
+
+# Optional minimal live test, sends no racing data:
+apex-f1 llm-smoke
+
+# Requires an imported historical race to analyze one:
+apex-f1 serve
+```
+
+Then open `http://localhost:8000/replay`, choose a lap and click
+**Generate historical brief**. The first request to the provider happens
+only after you explicitly click it. LLM smoke tests and real requests may
+consume provider tokens. This feature is entirely optional and does not
+automatically enable server-side LLM access.
+
+See [SovInfra-specific setup](docs/SOVINFRA_SETUP.md) for PowerShell,
+troubleshooting and provider compatibility.
+
 ## AI Race Engineer (optional OpenAI-compatible API)
 
 The **Historical Replay** page now supports a click-to-generate, evidence-linked
