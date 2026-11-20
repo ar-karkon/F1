@@ -13,6 +13,7 @@
 - [x] Browser-based Integration Lab for source readiness and TUM reference race comparisons.
 - [ ] Verify dedicated upstream CI run and stored JSON artifact.
 - [ ] Execute F1-StratLab no-llm profile in its own isolated environment with historical data.
+- [x] Separate opt-in LLM explanatory adapter for historical replay (not F1-StratLab agents).
 - [ ] Validate telemetry pipeline integration with adapter contract tests.
 
 ## Phase 1 — historic race replay
@@ -53,7 +54,8 @@
 - [ ] Combine opponent priors and race simulator in counterfactual scenarios.
 - [ ] Explanations must cite data timestamp, model version and uncertainty.
 - [ ] Human approval; no automatic racing decisions.
-- [ ] Optional LLM for explanation and tool calls (never source of numeric truth).
+- [x] Optional LLM for historical, evidence-linked explanation only (never source of numeric truth).
+- [ ] Benchmark explanatory faithfulness, hallucination and provider latency before any pilot.
 - [ ] Research-track pilot with small motorsport/sim-racing team.
 
 **Gate:** blinded engineer feedback and evidence of decision-usefulness.

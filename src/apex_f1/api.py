@@ -18,6 +18,12 @@ from apex_f1.integrations.tum_basic import (
     compare_tum_example,
     probe_tum,
 )
+from apex_f1.llm import (
+    LLMNotConfigured,
+    LLMSettings,
+    LLMUpstreamError,
+    explain_snapshot,
+)
 from apex_f1.replay import HistoricalRace
 from apex_f1.simulator import RaceState, evaluate_strategies
 
@@ -82,6 +88,38 @@ def historical_snapshot(
         return _load_local_race(year, round_number).snapshot(lap)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+class LLMBriefRequest(BaseModel):
+    focus: Literal["overview", "tyres", "pit_activity", "rivals"] = "overview"
+
+
+@app.get("/api/v1/llm/status")
+def llm_status() -> dict:
+    """Only opt-in status and the model name, NEVER an API key."""
+    return LLMSettings.from_env().public_status()
+
+
+@app.post("/api/v1/historical/{year}/{round_number}/brief/{lap}")
+def historical_llm_brief(
+    body: LLMBriefRequest,
+    year: int = Path(ge=2018, le=2100),
+    round_number: int = Path(ge=1, le=30),
+    lap: int = Path(ge=1, le=100),
+) -> dict:
+    """Human-triggered, historical-only LLM call with minimum as-of snapshot."""
+    settings = LLMSettings.from_env()
+    if not settings.configured():
+        raise HTTPException(status_code=503, detail="LLM disabled or not configured on server")
+    try:
+        snapshot = _load_local_race(year, round_number).snapshot(lap)
+        return explain_snapshot(snapshot, body.focus, settings)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except LLMNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except LLMUpstreamError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get("/integrations")

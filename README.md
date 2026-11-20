@@ -20,6 +20,7 @@
 - **Executable TUM basic race-time adapter** using original 2017 example parameters in an isolated subprocess (optional NumPy extra).
 - **F1-StratLab source contract probe**, not a running agent integration.
 - **OpenF1/FastF1 historical race replay:** completed-lap snapshots with time-of-observation cutoff to avoid seeing future laps. OpenF1 is the default public research source.
+- **Optional AI Race Engineer brief:** human-triggered explanatory LLM summaries of a single as-of historical snapshot with validated evidence IDs; disabled unless you opt in with server environment variables.
 
 ## Quick start
 
@@ -64,6 +65,28 @@ curl -s -X POST http://127.0.0.1:8000/api/v1/strategy/evaluate \
 ```
 
 Output includes expected **remaining seconds**, p10/p90 model bands, expected delta, and probability of being fastest **only among the modelled candidates**. This is not position, podium or victory probability.
+
+## AI Race Engineer (optional OpenAI-compatible API)
+
+The **Historical Replay** page now supports a click-to-generate, evidence-linked
+LLM commentary. It is **not** a trained strategy/pit-stop predictor.
+Apex deliberately sends **only the selected as-of historical snapshot**, not
+the full race or future laps. OpenF1 historical data is intended for
+research/non-commercial use; separately review your provider's privacy and
+data-retention terms before sending it.
+
+```bash
+export APEX_LLM_ENABLED=true
+export APEX_LLM_API_KEY="YOUR_SECRET_API_KEY"
+export APEX_LLM_MODEL="YOUR_PROVIDER_MODEL_ID"
+export APEX_LLM_BASE_URL="https://YOUR_PROVIDER_HOST/v1"
+apex-f1 serve
+```
+
+Do not paste your actual key into GitHub or share it in issues/screenshots.
+No model provider is assumed; use an **OpenAI Chat Completions compatible**
+endpoint supporting `/chat/completions`. No key is needed to run the rest of
+Apex. See [LLM setup and privacy](docs/LLM_SETUP.md).
 
 ## Research integration: execute the original TUM basic model
 
