@@ -31,7 +31,7 @@ def main() -> None:
     tum.add_argument("--start-compound", choices=["A3", "A4", "A5"], default="A4")
     tum.add_argument("--next-compound", choices=["A3", "A4", "A5"], default="A3")
 
-    status = subparsers.add_parser("integrations", help="Inspect pinned upstream source readiness")
+    subparsers.add_parser("integrations", help="Inspect pinned upstream source readiness")
 
     args = parser.parse_args()
     if args.command == "demo":
