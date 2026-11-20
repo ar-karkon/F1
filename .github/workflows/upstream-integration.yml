@@ -11,6 +11,7 @@ on:
       - "pyproject.toml"
       - ".github/workflows/upstream-integration.yml"
       - "src/apex_f1/api.py"
+      - "src/apex_f1/cli.py"
   pull_request:
     paths:
       - "src/apex_f1/integrations/**"
@@ -20,6 +21,7 @@ on:
       - "pyproject.toml"
       - ".github/workflows/upstream-integration.yml"
       - "src/apex_f1/api.py"
+      - "src/apex_f1/cli.py"
 
 permissions:
   contents: read
