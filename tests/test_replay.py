@@ -88,3 +88,10 @@ def test_summary_is_separate_from_prediction_snapshot():
     race = HistoricalRace(2024, 1, rows())
     assert race.summary()["has_predictions"] is False
     assert "available_leader_laps" not in race.snapshot(1)
+
+
+def test_all_snapshots_pass_chronology_verification():
+    race = HistoricalRace(2024, 1, rows())
+    result = race.verify_chronology()
+    assert result["chronological_snapshots_verified"] == 3
+    assert result["records_in_final_snapshot"] == len(rows())

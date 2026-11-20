@@ -81,6 +81,7 @@ def main() -> None:
         elif args.command == "replay-lap":
             result = race.snapshot(args.lap)
         else:
+            verification = race.verify_chronology()
             boundaries = race.boundaries()
             picks = sorted({1, max(1, len(boundaries) // 2), len(boundaries)})
             samples = [race.snapshot(int(boundaries[i - 1]["lap"])) for i in picks]
@@ -91,6 +92,7 @@ def main() -> None:
                 "round": race.round_number,
                 "completed_lap_records": len(race.laps),
                 "driver_count": len({r.driver for r in race.laps}),
+                "verification": verification,
                 "snapshot_checks": [
                     {
                         "leader_lap": x["as_of_leader_lap"],

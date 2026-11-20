@@ -164,6 +164,40 @@ class HistoricalRace:
             ],
         }
 
+    def verify_chronology(self) -> dict[str, Any]:
+        """Validate every available leader-lap snapshot, not just sample laps.
+
+        Checks observed-record cardinality, monotonic temporal boundaries and
+        that no driver card can represent a completion later than its cutoff.
+        This does not prove live-field disclosure timestamps.
+        """
+        boundaries = self.boundaries()
+        prev_cutoff = -1.0
+        prev_count = 0
+        for entry in boundaries:
+            cutoff = float(entry["session_seconds"])
+            if cutoff <= prev_cutoff:
+                raise ValueError("Nonmonotonic leader lap timeline")
+            current = self.snapshot(int(entry["lap"]))
+            expected = sum(row.end_session_seconds <= cutoff for row in self.laps)
+            if current["n_completed_records_visible"] != expected:
+                raise ValueError("Snapshot contains an incorrect number of visible records")
+            if expected < prev_count:
+                raise ValueError("Visible record count decreased")
+            if any(
+                card["last_seen_session_seconds"] > cutoff
+                for card in current["drivers"]
+            ):
+                raise ValueError("Future completed lap leaked into snapshot")
+            prev_count = expected
+            prev_cutoff = cutoff
+        return {
+            "chronological_snapshots_verified": len(boundaries),
+            "records_in_final_snapshot": prev_count,
+            "source": self.source,
+            "note": "Historical time filtering verified; field-level disclosure unverified.",
+        }
+
     def summary(self) -> dict[str, Any]:
         return {
             "mode": "HISTORICAL_IMPORTED",

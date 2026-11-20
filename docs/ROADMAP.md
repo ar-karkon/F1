@@ -21,7 +21,8 @@
 - [x] Provide provider-aware OpenF1/FastF1 historical race import CLI (session R) into ignored local files.
 - [x] Temporal cutoff based on earliest completed leader lap, with future-leak regression tests.
 - [x] Add read-only historical replay API and local dashboard.
-- [ ] Confirm OpenF1 2024 historical race fetch in dedicated GitHub Actions workflow (FastF1 anonymous access blocked on CI).
+- [x] OpenF1 2024 Bahrain research import verified on GitHub Actions (1,129 completed-lap records / 20 drivers). FastF1 anonymous access blocked on CI.
+- [x] Add all-leader-lap chronology verification in derived-only workflow report.
 - [ ] Extend import and validation to a diverse set of circuits, caution and wet-race scenarios.
 - [ ] Robust missing laps and tyre compound normalization.
 - [x] **Strict completed-lap chronology**: only records with end timestamp at or before cutoff; field-level real-time disclosure audit still pending.

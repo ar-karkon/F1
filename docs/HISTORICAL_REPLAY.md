@@ -74,3 +74,17 @@ commercial data redistribution license.
 FastF1's software license does not automatically grant redistribution rights
 for underlying commercial F1 timing information. Keep raw imports local and
 review applicable source terms before publishing datasets.
+
+## Verified research run — 2024 Bahrain, main race
+
+On 2026-11-20, the OpenF1 GitHub Actions workflow successfully fetched the
+actual 2024 Bahrain Grand Prix session and imported **1,129 completed lap rows**
+for **20 drivers**. The importer returned a 57-lap leader timeline.
+The lightweight report (without raw lap data) was uploaded to the run:
+
+https://github.com/ar-karkon/F1/actions/runs/44759293986
+
+This proves basic availability and decoding for this session, not realistic
+strategy accuracy, a low-latency live feed or permission to redistribute the
+underlying timing dataset. The default code uses OpenF1 because FastF1 3.9.2
+could not load complete F1 timing without authentication in GitHub Actions.
