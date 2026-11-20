@@ -13,9 +13,15 @@ Toy paired Monte Carlo (src/apex_f1/simulator.py)
       │
       └── Reproducible seeded candidate-level results
 
-Optional external path:
-FastF1 historical API → fastf1_adapter.py → data/derived/*.json
-                                   (not yet coupled to simulator)
+Optional separate historical path:
+FastF1 historical race → historical_import.py → ignored data/derived/*.json
+                                        ↓
+                            replay.py (leader lap as-of cutoff)
+                                        ↓
+                            GET /api/v1/historical/... and /replay
+(No connection to the synthetic optimizer or trained opponent model.)
+
+Optional old single-driver export: fastf1_adapter.py (separate utility).
 ```
 
 - Local-only by default. No external credentials needed for the demo.

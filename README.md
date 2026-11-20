@@ -19,6 +19,7 @@
 - Four pinned upstream projects tracked as Git submodules under `third_party/`, plus licensing notes and evaluation standards.
 - **Executable TUM basic race-time adapter** using original 2017 example parameters in an isolated subprocess (optional NumPy extra).
 - **F1-StratLab source contract probe**, not a running agent integration.
+- **FastF1 historical race replay:** completed-lap snapshots with time-of-observation cutoff to avoid seeing future laps.
 
 ## Quick start
 
@@ -36,7 +37,7 @@ apex-f1 demo --trials 400
 apex-f1 serve
 ```
 
-Open **http://127.0.0.1:8000** for the strategy dashboard, **http://127.0.0.1:8000/integrations** for the TUM / StratLab research laboratory, or **http://127.0.0.1:8000/docs** for API docs. The TUM panel requires its checked-out submodule and `.[tum]` extra to execute.
+Open **http://127.0.0.1:8000** for the strategy dashboard, **http://127.0.0.1:8000/integrations** for TUM / StratLab research, **http://127.0.0.1:8000/replay** for historical racing data (import required), or **http://127.0.0.1:8000/docs** for API docs. The TUM panel requires its checked-out submodule and `.[tum]` extra to execute.
 
 Docker alternative:
 
@@ -79,6 +80,34 @@ Endpoint: `POST /api/v1/integrations/tum/compare` with `{"pit_laps":[18,25,32]}`
 
 F1-StratLab is currently **contract-probed only**; no pretrained agent/models are run. See [integration progress](docs/INTEGRATION_PROGRESS.md).
 
+## Historical Race Replay (real FastF1 timing)
+
+The importer fetches real historical completed-lap timing, not a synthetic
+strategy. As-of lap N snapshots include only rows completed by the time the
+first car finished lap N. This avoids the common **same-lap future leakage**
+for cars completing that lap later.
+
+```bash
+python -m pip install -e ".[dev,data]"
+apex-f1 import-race --year 2024 --round 1
+apex-f1 replay-lap --year 2024 --round 1 --lap 17
+apex-f1 serve
+```
+
+Open **http://127.0.0.1:8000/replay** for an interactive leader-lap
+timeline and last-known driver cards. The importer runs explicitly through
+the CLI; the browser only reads existing locally imported files. Raw
+historical timing is kept in ignored `data/derived/`. The separate
+[historical smoke workflow](.github/workflows/historical-replay.yml)
+tests a 2024 Bahrain import via GitHub Actions and saves a tiny **derived
+verification artifact** only (no full raw timing data).
+
+**Limitations:** historical FastF1 values may include post-race corrections.
+Lap cutoff is not proof that all included fields were available to engineers
+in real time. The replay is neither a live feed nor a trained prediction.
+
+See [historical replay methodology](docs/HISTORICAL_REPLAY.md).
+
 ## Optional: historical FastF1 data
 
 ```bash
@@ -113,6 +142,8 @@ src/apex_f1/
   simulator.py            Synthetic paired Monte Carlo baseline
   fastf1_adapter.py       Optional real historical lap exporter
   integrations/           Pinned TUM worker and F1-StratLab contract probe
+  historical_import.py    FastF1 full-race historical timing adapter
+  replay.py               Leakage-aware as-of historical race snapshots
   cli.py                  Local commands
   static/index.html       Interactive strategy dashboard
 tests/                    Simulation and API regression tests
@@ -140,5 +171,6 @@ Open issues should identify the actual dataset, evaluation split, reference base
 - [Validation and scientific integrity](docs/VALIDATION.md)
 - [External open-source projects](docs/UPSTREAM_PROJECTS.md)
 - [Integration progress and limits](docs/INTEGRATION_PROGRESS.md)
+- [Historic replay and timing-cutoff methodology](docs/HISTORICAL_REPLAY.md)
 
 **License:** MIT for code authored in this repository; upstream packages and datasets retain their own terms. No affiliation with Formula 1 or any team is implied.

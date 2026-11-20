@@ -1,4 +1,4 @@
-.PHONY: install test upstream-test lint demo run export-example
+.PHONY: install test upstream-test lint demo run export-example import-history
 install:
 	python -m pip install -e ".[dev]"
 
@@ -19,3 +19,7 @@ run:
 
 export-example:
 	apex-f1 export-fastf1 --year 2024 --round 1 --driver VER --output data/derived/bahrain-2024-ver.json
+
+import-history:
+	python -m pip install -e ".[data]"
+	apex-f1 import-race --year 2024 --round 1

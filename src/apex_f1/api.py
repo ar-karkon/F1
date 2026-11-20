@@ -5,11 +5,13 @@ from dataclasses import asdict
 from importlib.resources import files
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Path
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from apex_f1 import __version__
+from apex_f1.historical_import import race_file
+from apex_f1.replay import HistoricalRace
 from apex_f1.integrations.stratlab import probe_stratlab
 from apex_f1.integrations.tum_basic import (
     UpstreamExecutionError,
@@ -41,6 +43,45 @@ class EvaluateRequest(BaseModel):
 @app.get("/")
 def dashboard() -> FileResponse:
     return FileResponse(str(files("apex_f1").joinpath("static/index.html")))
+
+
+@app.get("/replay")
+def historical_replay_dashboard() -> FileResponse:
+    return FileResponse(str(files("apex_f1").joinpath("static/replay.html")))
+
+
+def _load_local_race(year: int, round_number: int) -> HistoricalRace:
+    path = race_file(year, round_number)
+    if not path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Historical race missing. Run: apex-f1 import-race --year "
+                   f"{year} --round {round_number}",
+        )
+    try:
+        return HistoricalRace.load(path)
+    except (ValueError, KeyError, TypeError, OSError) as exc:
+        raise HTTPException(status_code=422, detail="Invalid local historical race file") from exc
+
+
+@app.get("/api/v1/historical/{year}/{round_number}/summary")
+def historical_summary(
+    year: int = Path(ge=2018, le=2100),
+    round_number: int = Path(ge=1, le=30),
+) -> dict:
+    return _load_local_race(year, round_number).summary()
+
+
+@app.get("/api/v1/historical/{year}/{round_number}/snapshot/{lap}")
+def historical_snapshot(
+    year: int = Path(ge=2018, le=2100),
+    round_number: int = Path(ge=1, le=30),
+    lap: int = Path(ge=1, le=100),
+) -> dict:
+    try:
+        return _load_local_race(year, round_number).snapshot(lap)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/integrations")
