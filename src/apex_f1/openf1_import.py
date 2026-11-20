@@ -11,6 +11,7 @@ import time
 from bisect import bisect_right
 from collections import defaultdict
 from datetime import datetime, timezone
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -38,11 +39,30 @@ def _get_json(endpoint: str, **query: object) -> list[dict]:
         f"{API_BASE}/{endpoint}?{params}",
         headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
     )
-    try:
-        with urlopen(request, timeout=30) as response:
-            payload = response.read(15_000_001)
-    except OSError as exc:
-        raise RuntimeError(f"OpenF1 {endpoint} request failed: {exc}") from exc
+    for attempt in range(6):
+        try:
+            with urlopen(request, timeout=30) as response:
+                payload = response.read(15_000_001)
+            break
+        except HTTPError as exc:
+            if exc.code != 429:
+                raise RuntimeError(
+                    f"OpenF1 {endpoint} request failed: HTTP {exc.code}"
+                ) from exc
+            if attempt == 5:
+                raise RuntimeError(
+                    f"OpenF1 {endpoint} rate limit persists after polite retries (429)"
+                ) from exc
+            header = exc.headers.get("Retry-After", "")
+            try:
+                retry_after = float(header)
+            except (TypeError, ValueError):
+                retry_after = 0.0
+            # Honor provider Retry-After and use capped exponential backoff.
+            wait = min(90.0, max(3.0 * 2**attempt, retry_after))
+            time.sleep(wait)
+        except OSError as exc:
+            raise RuntimeError(f"OpenF1 {endpoint} request failed: {exc}") from exc
     if len(payload) > 15_000_000:
         raise RuntimeError(f"OpenF1 {endpoint} response exceeded size limit")
     result = json.loads(payload)
@@ -245,7 +265,7 @@ def import_openf1_race(year: int, round_number: int) -> HistoricalRace:
     # Keep under the public historical API's 3 req/s; stop and report errors.
     raw = {}
     for endpoint in ("drivers", "laps", "stints", "pit", "position"):
-        time.sleep(0.38)
+        time.sleep(0.8)
         raw[endpoint] = _get_json(endpoint, session_key=session_key)
     return build_openf1_history(
         year=year, round_number=round_number,

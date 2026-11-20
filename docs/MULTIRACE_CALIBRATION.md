@@ -71,3 +71,11 @@ runs the entire import and uploads a short JSON report.
 **Evidence status:** the actual workflow run and measured results will
 be linked below after real execution. If it fails, no fabricated scores
 are acceptable.
+
+### API throttling in real-data experiments
+
+OpenF1 returned HTTP 429 when importing nine race weekends rapidly on a
+shared GitHub Actions runner. The client now honors numeric Retry-After,
+uses bounded exponential backoff, and deliberately pauses between race
+imports. Persistent rate limits are **errors**, never synthetic fallback
+inputs. Full raw race laps are not uploaded or committed.
