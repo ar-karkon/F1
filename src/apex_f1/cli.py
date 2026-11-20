@@ -44,6 +44,10 @@ def main() -> None:
         historical.add_argument("--round", type=int, default=1)
         if name == "import-race":
             historical.add_argument("--output", default=None)
+            historical.add_argument(
+                "--provider", choices=["openf1", "fastf1"], default="openf1",
+                help="OpenF1 historical API works without credentials; FastF1 may need F1 login",
+            )
         if name == "replay-lap":
             historical.add_argument("--lap", type=int, required=True)
 
@@ -64,7 +68,7 @@ def main() -> None:
         from apex_f1.historical_import import import_to_file
         from apex_f1.replay import HistoricalRace
 
-        target = import_to_file(args.year, args.round, args.output)
+        target = import_to_file(args.year, args.round, args.output, args.provider)
         summary = HistoricalRace.load(target).summary()
         print(json.dumps({"saved_to": str(target), **summary}, indent=2))
     elif args.command in ("replay-summary", "replay-lap", "replay-report"):
@@ -81,7 +85,7 @@ def main() -> None:
             picks = sorted({1, max(1, len(boundaries) // 2), len(boundaries)})
             samples = [race.snapshot(int(boundaries[i - 1]["lap"])) for i in picks]
             result = {
-                "source": "FastF1 completed-lap timing",
+                "source": race.source,
                 "mode": "HISTORICAL_VERIFICATION_NO_RAW_LAPS",
                 "season": race.year,
                 "round": race.round_number,

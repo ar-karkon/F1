@@ -90,7 +90,16 @@ def import_fastf1_race(year: int, round_number: int) -> HistoricalRace:
     return HistoricalRace(year=year, round_number=round_number, laps=completed)
 
 
-def import_to_file(year: int, round_number: int, output: str | None = None) -> Path:
-    history = import_fastf1_race(year, round_number)
+def import_to_file(
+    year: int, round_number: int, output: str | None = None, provider: str = "openf1"
+) -> Path:
+    if provider == "openf1":
+        from apex_f1.openf1_import import import_openf1_race
+
+        history = import_openf1_race(year, round_number)
+    elif provider == "fastf1":
+        history = import_fastf1_race(year, round_number)
+    else:
+        raise ValueError("provider must be 'openf1' or 'fastf1'")
     target = Path(output) if output else race_file(year, round_number)
     return history.save(target)

@@ -14,7 +14,8 @@ Toy paired Monte Carlo (src/apex_f1/simulator.py)
       └── Reproducible seeded candidate-level results
 
 Optional separate historical path:
-FastF1 historical race → historical_import.py → ignored data/derived/*.json
+OpenF1 public historical API → openf1_import.py → historical_import.py
+                    or optional FastF1 → ignored data/derived/*.json
                                         ↓
                             replay.py (leader lap as-of cutoff)
                                         ↓

@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from apex_f1 import __version__
 from apex_f1.historical_import import race_file
+from apex_f1.replay import HistoricalRace
 from apex_f1.integrations.stratlab import probe_stratlab
 from apex_f1.integrations.tum_basic import (
     UpstreamExecutionError,
@@ -18,7 +19,6 @@ from apex_f1.integrations.tum_basic import (
     compare_tum_example,
     probe_tum,
 )
-from apex_f1.replay import HistoricalRace
 from apex_f1.simulator import RaceState, evaluate_strategies
 
 app = FastAPI(

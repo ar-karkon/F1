@@ -15,6 +15,8 @@ from typing import Any
 
 SCHEMA_VERSION = 1
 SOURCE = "FastF1 historical race timing"
+OPENF1_SOURCE = "OpenF1 historical race timing"
+ALLOWED_SOURCES = {SOURCE, OPENF1_SOURCE}
 
 
 def _positive_int(value: Any, name: str) -> int:
@@ -73,6 +75,7 @@ class HistoricalRace:
     round_number: int
     laps: list[CompletedLap]
     session: str = "R"
+    source: str = SOURCE
 
     def __post_init__(self) -> None:
         if not 2018 <= _positive_int(self.year, "year") <= 2100:
@@ -81,6 +84,8 @@ class HistoricalRace:
             raise ValueError("Invalid round_number")
         if self.session != "R":
             raise ValueError("Replay currently supports full race sessions only")
+        if self.source not in ALLOWED_SOURCES:
+            raise ValueError("Unknown historical timing source")
         if not self.laps:
             raise ValueError("No completed laps available")
         seen: set[tuple[str, int]] = set()
@@ -141,7 +146,7 @@ class HistoricalRace:
                                     x["last_reported_position"] or 99, x["driver"]))
         return {
             "mode": "HISTORICAL_AS_OF_LEADER_LAP",
-            "source": SOURCE,
+            "source": self.source,
             "season": self.year,
             "round": self.round_number,
             "session": self.session,
@@ -162,7 +167,7 @@ class HistoricalRace:
     def summary(self) -> dict[str, Any]:
         return {
             "mode": "HISTORICAL_IMPORTED",
-            "source": SOURCE,
+            "source": self.source,
             "season": self.year,
             "round": self.round_number,
             "session": self.session,
@@ -179,7 +184,7 @@ class HistoricalRace:
             "season": self.year,
             "round": self.round_number,
             "session": self.session,
-            "source": SOURCE,
+            "source": self.source,
             "laps": [asdict(row) for row in self.laps],
         }
 
@@ -196,6 +201,7 @@ class HistoricalRace:
             year=obj["season"],
             round_number=obj["round"],
             session=obj["session"],
+            source=obj["source"],
             laps=[CompletedLap(**record) for record in rows],
         )
 

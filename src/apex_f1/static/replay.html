@@ -16,18 +16,18 @@ header{display:flex;justify-content:space-between;gap:16px;align-items:center;ma
 <main><div class="eyebrow">Motorsport intelligence / historical replay</div>
 <h1>Rewind the race.<br>Respect the timeline.</h1>
 <p class="intro">Explore real historical completed-lap data with an as-of timestamp cutoff. The selected snapshot only includes laps completed by the moment the leader crossed the line for that lap number—no future laps, final race result or prediction.</p>
-<div class="chips"><span class="chip">FastF1 historical source</span><span class="chip">As-of leader crossing</span><span class="chip">No simulated predictions</span><span class="chip">Local imported data only</span></div>
+<div class="chips"><span class="chip" id="data-source">Historical timing source</span><span class="chip">As-of leader crossing</span><span class="chip">No simulated predictions</span><span class="chip">Local imported data only</span></div>
 <div class="panel">
 <div class="row"><div><h2 id="race-label">2024 Bahrain · Round 1</h2><p class="meta">Read-only replay · historical Session R</p></div><span class="chip" id="load-status">Loading local race…</span></div>
-<div id="missing" class="empty" hidden>The race data has not been imported on this computer. Run:<p><code>pip install -e ".[dev,data]"</code></p><p><code>apex-f1 import-race --year 2024 --round 1</code></p>Then refresh this page. The browser does not make outbound FastF1 requests.</div>
+<div id="missing" class="empty" hidden>The race data has not been imported on this computer. Run:<p><code>pip install -e ".[dev]"</code></p><p><code>apex-f1 import-race --year 2024 --round 1 --provider openf1</code></p>Then refresh this page. The browser does not make outbound FastF1 requests.</div>
 <div id="content" hidden>
 <div class="dashboard"><div class="stat"><strong>As-of leader lap</strong><div id="current-lap" class="big">—</div><span class="meta">Selected decision boundary</span></div><div class="stat"><strong>Known drivers at cutoff</strong><div id="driver-count" class="big">—</div><span class="meta">Observed by the selected time</span></div><div class="stat"><strong>Session elapsed (seconds)</strong><div id="elapsed" class="big">—</div><span class="meta">End of leader lap</span></div></div>
 <div class="controls"><div><label for="lap">Scrub through leader laps</label><input type="range" id="lap" min="1" max="57" value="1"></div><button id="next" type="button">Next lap →</button></div>
 <p id="snapshot-status" class="meta" role="status" aria-live="polite"></p>
 <h2 style="margin-top:24px">Last-known driver state</h2><p class="meta">These cards may represent different last-completed laps. The positions are last reported—not an inferred synchronized classification.</p><div id="drivers" class="drivers"></div>
 </div></div>
-<div class="warning"><strong>HISTORICAL TIMING, NOT LIVE ENGINEER INTELLIGENCE</strong><div>FastF1 may contain historical corrections made after the race. Completed-lap cutoff prevents future row access, but does not prove all original fields were disclosed at the decision time. No 2026 regulations, model predictions, strategy recommendations or opponent behavioural inference have been applied yet.</div></div>
-<p class="foot">Data is stored in the local ignored <code>data/derived/</code> folder. Underlying F1 timing-data licensing must be reviewed before any public redistribution or commercial pilot. <a href="https://github.com/ar-karkon/F1/blob/main/docs/HISTORICAL_REPLAY.md">Implementation notes ↗</a></p>
+<div class="warning"><strong>HISTORICAL TIMING, NOT LIVE ENGINEER INTELLIGENCE</strong><div>OpenF1 and FastF1 may contain historical corrections made after the race. Completed-lap cutoff prevents future row access, but does not prove all original fields were disclosed at the decision time. No 2026 regulations, model predictions, strategy recommendations or opponent behavioural inference have been applied yet.</div></div>
+<p class="foot">Data is stored in the local ignored <code>data/derived/</code> folder. OpenF1 historical access is for research/non-commercial use; commercial use and timing-data rights must be cleared before any customer-facing deployment. <a href="https://github.com/ar-karkon/F1/blob/main/docs/HISTORICAL_REPLAY.md">Implementation notes ↗</a></p>
 </main></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -41,6 +41,7 @@ async function load(){
  if(!available.length)throw Error("No usable leader lap timestamps");
  $("lap").min=0;$("lap").max=available.length-1;$("lap").value=0;
  $("load-status").textContent=x.completed_lap_records+" completed lap records";
+ $("data-source").textContent=x.source;
  $("content").hidden=false;$("missing").hidden=true;
  await show(0);
  }catch(error){$("load-status").textContent="Import required";$("missing").hidden=false;$("missing").prepend(document.createTextNode(error.message+". "));}

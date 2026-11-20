@@ -18,10 +18,10 @@
 ## Phase 1 — historic race replay
 
 - [x] Implement normalized completed-lap history schema and unique (driver, lap) identifiers.
-- [x] Provide FastF1 historical race import CLI (session R) into ignored local files.
+- [x] Provide provider-aware OpenF1/FastF1 historical race import CLI (session R) into ignored local files.
 - [x] Temporal cutoff based on earliest completed leader lap, with future-leak regression tests.
 - [x] Add read-only historical replay API and local dashboard.
-- [ ] Confirm live FastF1 2024 race fetch in dedicated GitHub Actions workflow.
+- [ ] Confirm OpenF1 2024 historical race fetch in dedicated GitHub Actions workflow (FastF1 anonymous access blocked on CI).
 - [ ] Extend import and validation to a diverse set of circuits, caution and wet-race scenarios.
 - [ ] Robust missing laps and tyre compound normalization.
 - [x] **Strict completed-lap chronology**: only records with end timestamp at or before cutoff; field-level real-time disclosure audit still pending.

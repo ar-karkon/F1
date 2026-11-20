@@ -1,4 +1,4 @@
-# FastF1 historical replay — completed lap data, strict as-of cutoffs
+# Historical race replay — OpenF1 / FastF1, strict completed-lap cutoffs
 
 ## What is implemented
 
@@ -22,8 +22,8 @@ git clone https://github.com/ar-karkon/F1.git
 cd F1
 python -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev,data]"
-apex-f1 import-race --year 2024 --round 1
+pip install -e ".[dev]"
+apex-f1 import-race --year 2024 --round 1 --provider openf1
 apex-f1 replay-summary --year 2024 --round 1
 apex-f1 replay-lap --year 2024 --round 1 --lap 17
 apex-f1 serve
@@ -47,12 +47,15 @@ and not a trained prediction.
 
 ### Reproducible live-source smoke test
 
-A separate GitHub Actions job imports 2024 Bahrain (round 1), saves only
+A separate GitHub Actions job imports 2024 Bahrain (round 1) from OpenF1, saves only
 a small **derived verification report**, and uploads it as a temporary artifact.
 Raw race laps and FastF1 cache are not uploaded or committed. Real-data
 ingestion is a network-dependent optional check, distinct from offline CI.
 GitHub may rate-limit or block upstream sources; errors must not silently
-fall back to fabricated data.
+fall back to fabricated data. FastF1 3.9.2 on a GitHub runner failed to load
+2024 timing anonymously, so OpenF1 is the default for this research demo.
+See [OpenF1 data rights](OPENF1_DATA_RIGHTS.md): historical access is not a
+commercial data redistribution license.
 
 ## Current limitations
 
