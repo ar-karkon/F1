@@ -25,7 +25,7 @@ def _positive_int(value: Any, name: str) -> int:
 
 def _finite_number(value: Any, name: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (float, int)):
-        raise ValueError(f"{name} must be a finite number")
+        raise TypeError(f"{name} must be a finite number")
     result = float(value)
     if not math.isfinite(result):
         raise ValueError(f"{name} must be finite")
@@ -64,7 +64,7 @@ class CompletedLap:
             ):
                 raise ValueError(f"{field} is invalid")
         if not isinstance(self.pit_in, bool) or not isinstance(self.pit_out, bool):
-            raise ValueError("pit flags must be boolean")
+            raise TypeError("pit flags must be boolean")
 
 
 @dataclass
@@ -191,7 +191,7 @@ class HistoricalRace:
             raise ValueError("Unrecognized historical race data source")
         rows = obj.get("laps")
         if not isinstance(rows, list):
-            raise ValueError("laps must be a list")
+            raise TypeError("laps must be a list")
         return cls(
             year=obj["season"],
             round_number=obj["round"],
