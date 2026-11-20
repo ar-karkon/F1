@@ -1,6 +1,6 @@
 """Leakage-conscious pit-window empirical baseline (research, NOT race operations).
 
-Models probability a driver records a pit event within the NEXT H completed
+Models probability a driver records a pit-OUT lap within the NEXT H completed
 driver laps after a completed observation, using old races only. Labels
 require future records in training/backtest, but features never access them.
 No ML/LLM needed; smoothed bin frequencies are auditable and reproducible.
@@ -17,7 +17,7 @@ from typing import Any
 
 from apex_f1.replay import CompletedLap, HistoricalRace
 
-MODEL_VERSION = "pit-window-baseline-v1"
+MODEL_VERSION = "pit-window-outlap-v2"
 DEFAULT_HORIZON = 3
 MIN_TRAIN_EXAMPLES = 100
 
@@ -80,14 +80,16 @@ def _examples(
         rows.sort(key=lambda row: row.lap_number)
         for index, observed in enumerate(rows):
             following = rows[index + 1:index + horizon + 1]
-            if observed.pit_in or len(following) < horizon:
+            if (observed.pit_out and observed.lap_number > 1) or len(following) < horizon:
                 continue
             if any(
                 future.lap_number != observed.lap_number + offset
                 for offset, future in enumerate(following, start=1)
             ):
                 continue
-            label = int(any(future.pit_in for future in following))
+            label = int(any(
+                future.pit_out and future.lap_number > 1 for future in following
+            ))
             yield observed, label
 
 
@@ -111,8 +113,8 @@ class PitModel:
             raise ValueError("Unsupported pit model version")
         if not isinstance(self.horizon, int) or not 1 <= self.horizon <= 5:
             raise ValueError("Horizon must be 1–5 completed driver laps")
-        if self.example_count < MIN_TRAIN_EXAMPLES or not 0 <= self.event_count <= self.example_count:
-            raise ValueError("Insufficient training observations or invalid events")
+        if self.example_count < MIN_TRAIN_EXAMPLES or not 0 < self.event_count <= self.example_count:
+            raise ValueError("No usable pit-out events or insufficient training observations")
         if len(set(self.training_races)) != len(self.training_races) or not self.training_races:
             raise ValueError("Invalid training race inventory")
         for table in (self.by_compound_age, self.by_compound_age_stage):
@@ -180,8 +182,8 @@ class PitModel:
         for driver in snapshot["drivers"]:
             if float(driver["last_seen_session_seconds"]) > cutoff:
                 raise ValueError("Future completed lap would leak into prediction")
-            if driver["pit_in_on_last_lap"]:
-                continue  # Decision immediately after pit entry is not comparable.
+            if driver["pit_out_on_last_lap"] and driver["last_completed_lap"] > 1:
+                continue  # Skip immediately observed pit-out laps.
             pred = self.probability(
                 driver["last_known_compound"],
                 driver["last_known_tyre_life"],
@@ -207,14 +209,14 @@ class PitModel:
             "as_of_leader_lap": snapshot["as_of_leader_lap"],
             "cutoff_session_seconds": cutoff,
             "prediction_target": (
-                f"Observed pit event within next {self.horizon} *driver-completed* laps"
+                f"Observed pit-out flag within next {self.horizon} *driver-completed* laps"
             ),
             "predictions": rows,
             "notices": [
                 "Historical baseline only: not a validated team-specific strategy model.",
                 "OpenF1 event timing approximations and retrospective field changes apply.",
                 "Probabilities are smoothed bin frequencies, not an LLM opinion.",
-                "Excludes rows immediately following a recorded pit-in; no pit decisions are issued.",
+                "Excludes newly observed pit-out laps; an out-lap is not proof of a tyre change.",
             ],
         }
 
@@ -272,6 +274,7 @@ class PitModel:
                 "Brier score: lower is better. Baseline is training-set global event rate.",
                 "Model training and holdout use historical post-processed timing fields.",
                 "No team-specific telemetry, track effects or simulated pit losses.",
+                "Pit-out flags may reflect red flags, pit-lane starts and drive-throughs.",
             ],
         }
 

@@ -29,7 +29,7 @@ def sample_race(year: int, round_number: int, *, driver_count: int = 8) -> Histo
                     tyre_life=(lap % 16) + 1,
                     stint=1 if lap < 15 else 2,
                     position=k + 1,
-                    pit_in=pit,
+                    pit_out=pit,
                 )
             )
     return HistoricalRace(year, round_number, rows)
@@ -78,7 +78,8 @@ def test_predictions_stable_when_future_holdout_laps_change():
             tyre_life=0 if row.lap_number > 17 else row.tyre_life,
             stint=row.stint,
             position=row.position,
-            pit_in=True if row.lap_number > 17 else row.pit_in,
+            pit_in=row.pit_in,
+            pit_out=True if row.lap_number > 17 else row.pit_out,
         )
         for row in target.laps
     ]
@@ -96,7 +97,7 @@ def test_censored_tail_does_not_count_as_no_pit():
     from apex_f1.opponent import _examples
 
     target = HistoricalRace(2024, 1, [
-        CompletedLap("ABC", lap, 100 * lap, pit_in=lap == 3)
+        CompletedLap("ABC", lap, 100 * lap, pit_out=lap == 3)
         for lap in range(1, 6)
     ])
     labels = [(row.lap_number, label) for row, label in _examples(target, 3)]

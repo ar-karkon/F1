@@ -69,8 +69,9 @@ Output includes expected **remaining seconds**, p10/p90 model bands, expected de
 
 ## Opponent Pit Window baseline (empirical historical benchmark)
 
-A CPU-only auditable baseline predicts the frequency of a recorded pit event
-within the next **three driver-completed laps**, from only previous observations
+A CPU-only auditable baseline predicts the frequency of a recorded pit-out-lap flag
+within the next **three driver-completed laps** (a pit-exit proxy, not an
+observed pit-entry event or a proven tyre-change decision), from only previous observations
 about tyre compound, tyre age and race stage. Training happens on separate,
 earlier historical races and is evaluated **out of sample** against the
 overall historical event rate. It is NOT an AI-engineered real pit strategy

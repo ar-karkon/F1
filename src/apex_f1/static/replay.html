@@ -57,7 +57,7 @@ Then refresh this page. The browser never downloads race data itself.</div>
 <h2 style="margin-top:24px">Last-known driver state</h2><p class="meta">These cards may represent different last-completed laps. The positions are last reported—not an inferred synchronized classification.</p><div id="drivers" class="drivers"></div>
 <section class="panel" style="margin-top:22px" aria-labelledby="pit-title">
 <div class="row"><h2 id="pit-title">Opponent Pit Window · Empirical Baseline</h2><span class="chip" id="pit-ready">Local baseline only</span></div>
-<p class="meta">Frequency of a recorded pit event within the next three driver-completed laps, estimated only from *earlier races*. No LLM probabilities or real pit strategy recommendations. Source fields may have retrospective corrections.</p>
+<p class="meta">Frequency of a recorded pit-out lap (a pit-exit proxy) within the next three driver-completed laps, estimated only from *earlier races*. No LLM probabilities or real pit strategy recommendations. Source fields may have retrospective corrections.</p>
 <div id="pit-status" role="status" class="meta" aria-live="polite">Checking locally fitted model…</div>
 <div id="pit-output" class="pit-list" aria-live="polite"></div>
 <p class="ai-warning">⚠ These are out-of-sample research probabilities, not calibrated real-time estimates. Use the held-out Brier benchmark to judge whether this baseline improves on historical base rate.</p>

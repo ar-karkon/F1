@@ -70,3 +70,29 @@ def test_tyre_stint_future_changes_not_exposed_early():
     assert data.source.startswith("OpenF1")
     assert data.snapshot(1)["drivers"][0]["last_known_compound"] == "HARD"
     assert data.snapshot(2)["drivers"][0]["last_known_compound"] == "SOFT"
+
+
+def test_pit_passage_is_not_revealed_before_its_utc_timestamp():
+    """A pit event tagged lap 1 but occurring after lap 1 must wait until lap 2."""
+    history = build_openf1_history(
+        year=2024,
+        round_number=4,
+        session_start="2024-04-07T06:00:00Z",
+        laps=[
+            {"driver_number": 7, "lap_number": 1,
+             "date_start": "2024-04-07T06:00:00Z", "lap_duration": 90.0},
+            {"driver_number": 7, "lap_number": 2,
+             "date_start": "2024-04-07T06:01:30Z", "lap_duration": 90.0},
+            {"driver_number": 7, "lap_number": 3,
+             "date_start": "2024-04-07T06:03:00Z", "lap_duration": 90.0},
+        ],
+        drivers=[{"driver_number": 7, "name_acronym": "AAA"}],
+        stints=[], positions=[],
+        pits=[{"driver_number": 7, "lap_number": 1,
+               "date": "2024-04-07T06:01:35Z"}],
+    )
+    assert history.snapshot(1)["drivers"][0]["pit_in_on_last_lap"] is False
+    assert history.snapshot(1)["drivers"][0]["observed_pit_ins"] == 0
+    assert history.snapshot(2)["drivers"][0]["pit_in_on_last_lap"] is True
+    assert history.snapshot(2)["drivers"][0]["observed_pit_ins"] == 1
+    assert history.snapshot(3)["drivers"][0]["observed_pit_ins"] == 1

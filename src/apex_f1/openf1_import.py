@@ -133,21 +133,30 @@ def build_openf1_history(
     for rows in stints_by_driver.values():
         rows.sort(key=lambda x: int(x["lap_start"]))
 
-    pit_by_driver_and_lap: dict[tuple[int, int], list[float]] = defaultdict(list)
+    # The pit endpoint's lap_number does not necessarily indicate the
+    # completed lap whose timestamp covers the pit-lane passage. Associate
+    # pit events by their own UTC timestamp, and reveal each ONLY at the
+    # first subsequent completed lap for that driver. Otherwise later stops
+    # can disappear or be incorrectly backdated.
+    pit_by_driver: dict[int, list[float]] = defaultdict(list)
     for row in pits:
-        driver, lap = _integer(row.get("driver_number")), _integer(row.get("lap_number"))
+        driver = _integer(row.get("driver_number"))
         try:
             stamp = _utc_seconds(row.get("date"))
         except (TypeError, ValueError):
             continue
-        if driver is not None and lap is not None and lap > 0:
-            pit_by_driver_and_lap[(driver, lap)].append(stamp)
+        if driver is not None:
+            pit_by_driver[driver].append(stamp)
+    for timestamps in pit_by_driver.values():
+        timestamps.sort()
     position_events = _sorted_events(positions)
     completed = []
     used: set[tuple[int, int]] = set()
 
     for driver, rows in by_driver.items():
         rows.sort(key=lambda x: int(x["lap_number"]))
+        pit_times = pit_by_driver[driver]
+        next_pit_index = 0
         for i, row in enumerate(rows):
             number = int(row["lap_number"])
             if (driver, number) in used:
@@ -182,9 +191,10 @@ def build_openf1_history(
                 age_at_start + number - int(chosen["lap_start"]) + 1
                 if age_at_start is not None else None
             )
-            pit_visible = any(
-                timestamp <= end for timestamp in pit_by_driver_and_lap[(driver, number)]
-            )
+            pit_visible = False
+            while next_pit_index < len(pit_times) and pit_times[next_pit_index] <= end:
+                pit_visible = True
+                next_pit_index += 1
             driver_name = acronyms.get(driver)
             if not isinstance(driver_name, str) or not 2 <= len(driver_name) <= 5:
                 driver_name = f"#{driver}"

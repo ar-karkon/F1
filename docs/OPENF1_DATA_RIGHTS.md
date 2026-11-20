@@ -30,3 +30,23 @@ that every original source field was published immediately in real time.
 For an engineering-grade timing source, secure an approved live feed and
 field-level release-timestamp audit before training an agent or claiming
 no operational data leakage.
+
+
+## Pit timestamp mapping and out-lap proxy (model v2)
+
+A race-data audit on 2024 Japan found 54 entries in the OpenF1 `pit`
+endpoint and 54 flags in `laps.is_pit_out_lap`, but the old mapping to a
+same-numbered lap only preserved 18 as completed-lap `pit_in` events.
+The pit API's `lap_number` should **not** be assumed to designate a
+completed lap whose end timestamp is after the pit event.
+
+The importer now sorts pit event timestamps per driver and makes each
+passage visible only at the first subsequently **completed** driver lap.
+This avoids backdating an event to a completion that occurred before it.
+Pit events after a driver's last usable completion remain unassigned.
+
+For the independent *Opponent Pit Window* empirical benchmark, labels
+intentionally use `laps.is_pit_out_lap` (excluding race lap 1) as a more
+directly observable historical proxy for pit lane activity. An out-lap does
+not distinguish a strategic tyre change from red flags, drive-throughs or
+pit-lane starts, so the benchmark does not establish a model of pit intent.
