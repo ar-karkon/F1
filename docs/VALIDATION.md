@@ -31,3 +31,18 @@ Observed historical finishing position is not a valid causal label for an altern
 - Accuracy and calibration improvements shown vs transparent baselines.
 - External validation and clearly communicated confidence limits.
 - No confidential telemetry or copyrighted upstream data redistributed without rights.
+
+## Measured 2024 pit-out baseline — negative generalization result
+
+The chronological nine-race study (r1–3 train, r4–5 calibrate, r6–9
+final test) executed successfully using real OpenF1 historical data:
+[GitHub Actions run #44794792592](https://github.com/ar-karkon/F1/actions/runs/44794792592).
+
+On 4,500 overlapping, non-independent driver-lap windows from four
+untouched races, the held-out Brier scores were **0.067674** for a
+constant training-set base rate, **0.072806** for the fitted empirical
+pit-out model, and **0.077231** after one-parameter calibration.
+Log loss and ECE also worsened. The real test shows that this
+feature is currently **not validated to outperform a trivial prior**.
+See [full metrics](MULTIRACE_CALIBRATION.md). The previous positive
+single-race Japan score is not an appropriate overall accuracy claim.

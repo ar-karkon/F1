@@ -38,3 +38,26 @@ all the upstream model features.
 
 The SovInfra LLM API key is irrelevant to this specific no-LLM mode.
 Do not substitute text LLM output for missing numeric model artifacts.
+
+## Verified pinned CI preflight — 20 November 2026
+
+Successful upstream CI: [run #44795317195](https://github.com/ar-karkon/F1/actions/runs/44795317195);
+download the `stratlab-no-llm-preflight` artifact for the original
+machine-readable JSON.
+
+| Check | Measured result |
+| --- | --- |
+| Submodule commit | `b65c34e84c8a9d6e29f7a9741bbaa22b0aae851c`, verified |
+| `run_lap` function source contract | Verified |
+| `no_llm.py` source present | Yes |
+| `tests/fixtures/mini_race.parquet` | Present |
+| `data/models/tire_degradation/routing_config.json` | **Missing** |
+| `data/models/lap_time` | **Missing** |
+| `data/models/agents` | **Missing** |
+| No-LLM model inference executed | **No** |
+
+**Status: `BLOCKED_MISSING_MODELS_OR_FIXTURES`.** The current blocker
+is original upstream model artifacts, not the availability of an LLM
+API key. We can evaluate another legitimately distributable independent
+model or train replacements, but cannot honestly claim to have run
+F1-StratLab's pretrained strategy pipeline with its existing public checkout.

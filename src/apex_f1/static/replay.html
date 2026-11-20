@@ -60,7 +60,7 @@ Then refresh this page. The browser never downloads race data itself.</div>
 <p class="meta">Frequency of a recorded pit-out lap (a pit-exit proxy) within the next three driver-completed laps, estimated only from *earlier races*. No LLM probabilities or real pit strategy recommendations. Source fields may have retrospective corrections.</p>
 <div id="pit-status" role="status" class="meta" aria-live="polite">Checking locally fitted model…</div>
 <div id="pit-output" class="pit-list" aria-live="polite"></div>
-<p class="ai-warning">⚠ These are out-of-sample research probabilities, not calibrated real-time estimates. Use the held-out Brier benchmark to judge whether this baseline improves on historical base rate.</p>
+<p class="ai-warning"><strong>⚠ REAL VALIDATION: FAILED TO BEAT BASE RATE.</strong> Across four unseen 2024 races, the constant base-rate Brier was 0.067674 versus 0.072806 for this model (lower is better). This research display is not a dependable pit-stop forecast or tactical recommendation. <a href="https://github.com/ar-karkon/F1/blob/main/docs/MULTIRACE_CALIBRATION.md">See the verified results.</a></p>
 </section>
 <section class="panel" style="margin-top:22px" aria-labelledby="ai-title">
 <div class="row"><h2 id="ai-title">AI Race Engineer · Historical Brief</h2><span id="ai-ready" class="chip">LLM opt-in only</span></div>

@@ -68,9 +68,65 @@ runs the entire import and uploads a short JSON report.
 - No accuracy claims about stop intent, race outcomes, win probability,
   professional race strategy or financial return are supported.
 
-**Evidence status:** the actual workflow run and measured results will
-be linked below after real execution. If it fails, no fabricated scores
-are acceptable.
+## Verified real-data benchmark (20 November 2026)
+
+**Reproducible GitHub Actions run:** [Multi-Race Chronological Calibration
+Benchmark #44794792592](https://github.com/ar-karkon/F1/actions/runs/44794792592),
+commit `204881cabfd140e212e5c122f03c618598bb1994`.
+The run fetched real OpenF1 timing for all nine weekends, trained on
+r1–3 only, fitted the one-parameter logit intercept on r4–5 only and
+evaluated the frozen model on r6–9 only. The Actions artifact
+`real-2024-multirace-calibration` contains the original aggregate JSON.
+
+- **Base training:** 2,750 overlapping windows.
+- **Calibration:** 1,728 overlapping windows with 244 positive out-lap windows
+  (14.12%); fitted logit intercept **+0.23248553**.
+- **Final holdouts:** **4,500** overlapping driver-lap windows across four
+  different circuits; **322 positives** (**7.16%** observed). None of these
+  outcomes was used to fit the baseline or calibrator.
+
+### Pooled four-race scores (lower is better)
+
+| Frozen method | Brier score | Log loss | 10-bin ECE |
+| --- | ---: | ---: | ---: |
+| Training-set constant base rate | **0.067674** | **0.264901** | **0.035198** |
+| Uncalibrated pit-out v2 | 0.072806 | 0.279921 | 0.048244 |
+| Intercept calibrated with r4–5 | 0.077231 | 0.292388 | 0.068889 |
+
+**Validation result: FAILED TO BEAT THE SIMPLE BASELINE.** Both the raw
+model and the calibrator generalize worse than the training-only event rate
+on the four genuinely untouched test races, across all three scoring
+measures. The intercept calibration **worsened** each metric.
+This is a negative research result and is intentionally published.
+
+### Per-race Brier score
+
+| Unseen 2024 GP | Decision windows | Positive out-lap windows | Base rate | Raw model | Calibrated |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Miami (r6) | 1,022 | 83 | **0.075270** | 0.081315 | 0.085576 |
+| Emilia-Romagna (r7) | 1,151 | 78 | **0.064695** | 0.069736 | 0.074284 |
+| Monaco (r8) | 1,162 | 37 | **0.036440** | 0.045383 | 0.052700 |
+| Canada (r9) | 1,165 | 124 | **0.095109** | 0.095727 | 0.097291 |
+
+The earlier *single-race Japan test* (Brier 0.129186 raw vs 0.133608
+base rate) was encouraging, but **not representative** of later races.
+Japan was used for **calibration** in this new split and was not in the
+final test. Calibration learned a higher out-lap prevalence from Japan
+and China, then increased the base model log odds. Out-laps were much
+less common on later held-out races, explaining the direction of failure.
+
+**Interpretation:** The tested compound/tyre-age/race-stage bins do not
+robustly beat a trivial historical prior for these events. The model
+must remain explicitly labelled *research only / unvalidated*, and
+this version must not be marketed as an accurate competitor prediction
+or used to advise real pit-stop decisions.
+
+**Next experiment (new untouched holdout required):** pre-register a
+stronger conditional hazard model, improve track/race-normalized features
+and flag red-flag/penalty out-laps; then evaluate on races not yet
+consulted. Avoid repeatedly tuning to these four test races.
+
+
 
 ### API throttling in real-data experiments
 

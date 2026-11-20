@@ -46,8 +46,11 @@
   (r1–3 train, r4–5 calibrate, r6–9 final tests).
 - [x] Add separate Brier/log loss/10-bin ECE metrics for raw vs calibrated
   vs training-only base rate, per race and pooled.
-- [ ] Review actual out-of-sample scores and data issues before promoting
-  the empirical baseline to an operator-facing decision-support feature.
+- [x] Reviewed real four-race out-of-sample scoring: baseline Brier
+  0.067674 outperformed raw 0.072806 and calibrated 0.077231.
+  **Model NOT validated for decision support.**
+- [ ] Build a new hazard/track-aware design and pre-register a fresh
+  untouched evaluation set rather than tuning repeatedly on r6–9.
 
 
 - [x] Verify 2024 Japan *holdout* pit-out proxy Brier 0.129186 vs base 0.133608;

@@ -7,6 +7,17 @@
 
 **Apex Intelligence** is an independent motorsport AI research project exploring race strategy, historical telemetry, opponent modelling, and human-in-the-loop decision support.
 
+> **Measured validation status — not ready for race decisions:** On **four
+> unseen 2024 Grands Prix** (Miami, Imola, Monaco, Canada), the simple
+> training-base-rate prior **beat our raw and calibrated pit-out window
+> models**. Brier: **0.067674 base** vs **0.072806 raw** vs
+> **0.077231 calibrated** (lower is better). These are real OpenF1
+> historical tests, with 4,500 overlapping decision windows.
+> See [full validation report](docs/MULTIRACE_CALIBRATION.md).
+> F1-StratLab no-LLM model inference remains blocked by absent upstream
+> pretrained weight files; [verified preflight](docs/STRATLAB_NO_LLM_PREFLIGHT.md).
+
+
 > **IMPORTANT:** The included strategy engine is a deliberately simple **SYNTHETIC, UNVALIDATED** Monte Carlo baseline with illustrative tyre wear and pace constants. It is not a real F1 strategy optimizer, makes no race-win predictions, and must not be used for real race operations.
 
 ## What's included now
