@@ -98,7 +98,11 @@ Open `http://localhost:8000/replay`, select a lap and inspect the
 Opponent Pit Window panel. All raw timing stays in `data/derived/` locally.
 GitHub Actions measures actual 2024 Japan holdout performance and stores
 **only aggregate benchmark metrics**. The explicit time split protects
-against training on the event being assessed. See [pit baseline methodology](docs/PIT_WINDOW_BASELINE.md).
+against training on the event being assessed. See [pit baseline methodology](docs/PIT_WINDOW_BASELINE.md) and the
+[verified 2024 Japan holdout report](docs/PIT_WINDOW_BASELINE_BENCHMARK.md).
+The actual first held-out model Brier score was **0.129186** versus
+**0.133608** for the training base-rate baseline; calibration is still weak,
+and these values must not be used for operational strategy.
 
 ## SovInfra API setup (recommended)
 

@@ -42,6 +42,11 @@
 
 ## Phase 3 — opponent intelligence
 
+- [x] Verify 2024 Japan *holdout* pit-out proxy Brier 0.129186 vs base 0.133608;
+  798 overlapping decision windows. See [benchmark report](PIT_WINDOW_BASELINE_BENCHMARK.md).
+- [ ] Resolve weak probability calibration and verify at several independent circuits.
+
+
 - [x] Empirical smoothed pit-window baseline from earlier races, with 3-driver-lap target and holdout Brier evaluation.
 - [ ] Train team/driver-conditioned pit timing hazard model after dataset validation.
 - [ ] Behavioural features: stint transitions, traffic response, safety-car response.

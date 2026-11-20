@@ -100,3 +100,11 @@ without multiple time-held-out circuit/year benchmarks and data rights.
 4. Test F1-StratLab's separate `no-llm` runtime (GitHub issue #7).
 5. Integrate explicit counterfactual simulation only when validated, not
    by asking an LLM to invent pit time savings.
+
+## First verified real-data result
+
+2024 Japan held out after training on rounds 1–3: model Brier **0.129186**,
+global training base-rate Brier **0.133608**, 798 overlapping windows.
+The calibration bins indicate substantial mismatch: this is a research
+baseline only. See the [full reproducibility report](PIT_WINDOW_BASELINE_BENCHMARK.md)
+and [successful GitHub run](https://github.com/ar-karkon/F1/actions/runs/44776941827).
