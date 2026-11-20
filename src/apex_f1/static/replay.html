@@ -19,6 +19,9 @@ header{display:flex;justify-content:space-between;gap:16px;align-items:center;ma
 .ai-result ul{margin:8px 0 16px;padding-left:20px}
 .ai-result li{margin-bottom:8px}
 .ai-warning{color:#e2c397;font-size:11px}
+.selector{background:#142234;border:1px solid var(--line);border-radius:12px;padding:13px 17px;margin:20px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.selector label{margin:0}
+.selector select{padding:10px;background:#1b2a3c;color:var(--fg);border:1px solid var(--line);border-radius:8px;min-width:210px}
 .pit-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-top:16px}
 .pit-driver{background:#152234;border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
 .pit-number{font-size:22px;color:var(--lime);font-weight:850;letter-spacing:-.04em}
@@ -34,9 +37,19 @@ header{display:flex;justify-content:space-between;gap:16px;align-items:center;ma
 <h1>Rewind the race.<br>Respect the timeline.</h1>
 <p class="intro">Explore real historical completed-lap data with an as-of timestamp cutoff. The selected snapshot only includes laps completed by the moment the leader crossed the line for that lap number—no future laps, final race result or prediction.</p>
 <div class="chips"><span class="chip" id="data-source">Historical timing source</span><span class="chip">As-of leader crossing</span><span class="chip">No simulated predictions</span><span class="chip">Local imported data only</span></div>
+<div class="selector"><label for="race-select">Historical race session</label>
+<select id="race-select">
+<option value="2024:4" selected>2024 Japan · Round 4 (out-of-sample benchmark)</option>
+<option value="2024:1">2024 Bahrain · Round 1 (baseline training)</option>
+<option value="2024:2">2024 Saudi Arabia · Round 2 (training)</option>
+<option value="2024:3">2024 Australia · Round 3 (training)</option>
+</select></div>
 <div class="panel">
-<div class="row"><div><h2 id="race-label">2024 Bahrain · Round 1</h2><p class="meta">Read-only replay · historical Session R</p></div><span class="chip" id="load-status">Loading local race…</span></div>
-<div id="missing" class="empty" hidden>The race data has not been imported on this computer. Run:<p><code>pip install -e ".[dev]"</code></p><p><code>apex-f1 import-race --year 2024 --round 1 --provider openf1</code></p>Then refresh this page. The browser does not make outbound FastF1 requests.</div>
+<div class="row"><div><h2 id="race-label">2024 Japan · Round 4</h2><p class="meta">Read-only replay · historical Session R</p></div><span class="chip" id="load-status">Loading local race…</span></div>
+<div id="missing" class="empty" hidden><p id="load-error">This historical race has not been imported here.</p>
+<p><code>pip install -e ".[dev]"</code></p>
+<p><code id="import-command">apex-f1 import-race --year 2024 --round 4 --provider openf1</code></p>
+Then refresh this page. The browser never downloads race data itself.</div>
 <div id="content" hidden>
 <div class="dashboard"><div class="stat"><strong>As-of leader lap</strong><div id="current-lap" class="big">—</div><span class="meta">Selected decision boundary</span></div><div class="stat"><strong>Known drivers at cutoff</strong><div id="driver-count" class="big">—</div><span class="meta">Observed by the selected time</span></div><div class="stat"><strong>Session elapsed (seconds)</strong><div id="elapsed" class="big">—</div><span class="meta">End of leader lap</span></div></div>
 <div class="controls"><div><label for="lap">Scrub through leader laps</label><input type="range" id="lap" min="1" max="57" value="1"></div><button id="next" type="button">Next lap →</button></div>
@@ -64,10 +77,16 @@ header{display:flex;justify-content:space-between;gap:16px;align-items:center;ma
 <script>
 const $=id=>document.getElementById(id);
 let available=[],lap=null,nonce=0,briefNonce=0,llmEnabled=false,pitNonce=0,pitReady=false;
+let raceYear=2024,raceRound=4,loadNonce=0;
 const format=v=>v===null||v===undefined?"Unknown":String(v);
 async function load(){
+ const token=++loadNonce;nonce++;pitNonce++;briefNonce++;lap=null;available=[];
+ $("content").hidden=true;$("missing").hidden=true;
+ $("load-status").textContent="Loading local race…";
+ $("import-command").textContent="apex-f1 import-race --year "+raceYear+" --round "+raceRound+" --provider openf1";
  try{
- const response=await fetch("/api/v1/historical/2024/1/summary");
+ const response=await fetch("/api/v1/historical/"+raceYear+"/"+raceRound+"/summary");
+ if(token!==loadNonce)return;
  if(!response.ok)throw Error(response.status===404?"Missing local data":"Could not read race data");
  const x=await response.json(); available=x.available_leader_laps.map(v=>v.lap);
  if(!available.length)throw Error("No usable leader lap timestamps");
@@ -76,7 +95,7 @@ async function load(){
  $("data-source").textContent=x.source;
  $("content").hidden=false;$("missing").hidden=true;
  await show(0);
- }catch(error){$("load-status").textContent="Import required";$("missing").hidden=false;$("missing").prepend(document.createTextNode(error.message+". "));}
+ }catch(error){if(token!==loadNonce)return;$("load-status").textContent="Import required";$("missing").hidden=false;$("load-error").textContent=error.message;}
 }
 function makeDriver(d){
  const el=document.createElement("div");el.className="driver";
@@ -94,7 +113,7 @@ async function show(index){
  briefNonce++;$("ai-output").hidden=true;$("ai-output").replaceChildren();$("ai-status").textContent="Generate an explanation for the selected lap only.";
  $("snapshot-status").textContent="Loading as-of snapshot…";$("next").disabled=true;
  try{
- const r=await fetch("/api/v1/historical/2024/1/snapshot/"+selected);
+ const r=await fetch("/api/v1/historical/"+raceYear+"/"+raceRound+"/snapshot/"+selected);
  if(!r.ok)throw Error("Snapshot unavailable for lap "+selected);
  const x=await r.json();if(token!==nonce)return;
  lap=index;$("current-lap").textContent=x.as_of_leader_lap;$("driver-count").textContent=x.drivers.length;
@@ -121,7 +140,7 @@ async function loadPit(selected){
  const token=++pitNonce;
  $("pit-status").textContent="Calculating history-based frequencies for leader lap "+selected+"…";
  try{
- const r=await fetch("/api/v1/historical/2024/1/opponent-pit/"+selected);
+ const r=await fetch("/api/v1/historical/"+raceYear+"/"+raceRound+"/opponent-pit/"+selected);
  const data=await r.json();
  if(!r.ok)throw Error(typeof data.detail==="string"?data.detail:"Prediction unavailable");
  if(token!==pitNonce)return;
@@ -163,7 +182,7 @@ async function generateBrief(){
  $("generate-ai").disabled=true;$("ai-output").hidden=true;
  $("ai-status").textContent="Submitting only the selected historical snapshot to your LLM provider…";
  try{
- const r=await fetch("/api/v1/historical/2024/1/brief/"+selected,{
+ const r=await fetch("/api/v1/historical/"+raceYear+"/"+raceRound+"/brief/"+selected,{
    method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({focus:$("ai-focus").value})
  });
@@ -182,6 +201,14 @@ async function generateBrief(){
  }catch(e){if(token===briefNonce)$("ai-status").textContent=e.message;}
  finally{if(token===briefNonce)$("generate-ai").disabled=!llmEnabled;}
 }
+$("race-select").addEventListener("change",event=>{
+ const [year,round]=event.target.value.split(":").map(Number);
+ raceYear=year;raceRound=round;
+ $("race-label").textContent=event.target.selectedOptions[0].textContent.split(" (")[0];
+ $("pit-output").replaceChildren();
+ $("ai-output").replaceChildren();$("ai-output").hidden=true;
+ load();
+});
 $("generate-ai").addEventListener("click",generateBrief);
 $("lap").addEventListener("input",e=>show(Number(e.target.value)));
 $("next").addEventListener("click",()=>{if(lap!==null&&lap<available.length-1){$("lap").value=lap+1;show(lap+1);}});

@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  heldout-2024-bahrain:
+  heldout-2024-japan:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -28,26 +28,26 @@ jobs:
           cache-dependency-path: pyproject.toml
       - name: Install local research project
         run: python -m pip install -e ".[dev]"
-      - name: Import three 2023 races as training data
+      - name: Import three 2024 races as training data
         run: |
           for round in 1 2 3; do
-            apex-f1 import-race --year 2023 --round "$round" --provider openf1               > "/tmp/training-import-$round.json"
+            apex-f1 import-race --year 2024 --round "$round" --provider openf1               > "/tmp/training-import-$round.json"
           done
-      - name: Import held-out 2024 Bahrain race
+      - name: Import held-out 2024 Japan race
         run: |
-          apex-f1 import-race --year 2024 --round 1 --provider openf1             > /tmp/heldout-import.json
-      - name: Train empirical baseline only on 2023
-        run: apex-f1 fit-pit-model --train 2023:1 2023:2 2023:3 --horizon 3
+          apex-f1 import-race --year 2024 --round 4 --provider openf1             > /tmp/heldout-import.json
+      - name: Train empirical baseline only on earlier 2024 weekends
+        run: apex-f1 fit-pit-model --train 2024:1 2024:2 2024:3 --horizon 3
       - name: Compute held-out Brier score and calibration
-        run: apex-f1 backtest-pit --year 2024 --round 1 > pit-window-backtest.json
+        run: apex-f1 backtest-pit --year 2024 --round 4 > pit-window-backtest.json
       - name: Verify as-of inference at leader lap 20
         run: |
-          apex-f1 predict-pit --year 2024 --round 1 --lap 20             > /tmp/one-heldout-prediction.json
+          apex-f1 predict-pit --year 2024 --round 4 --lap 20             > /tmp/one-heldout-prediction.json
       - name: Unit tests (no network needed)
         run: pytest -q tests/test_opponent.py
       - name: Upload aggregate metrics only (no raw lap timing or model artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: heldout-pit-window-benchmark
+          name: heldout-2024-japan-pit-window-benchmark
           path: pit-window-backtest.json
           retention-days: 14

@@ -54,13 +54,13 @@ are not valid for operational racing without a new data agreement and audit.
 python -m pip install -e ".[dev]"
 
 for round in 1 2 3; do
-  apex-f1 import-race --year 2023 --round "$round" --provider openf1
+  apex-f1 import-race --year 2024 --round "$round" --provider openf1
 done
-apex-f1 import-race --year 2024 --round 1 --provider openf1
+apex-f1 import-race --year 2024 --round 4 --provider openf1
 
-apex-f1 fit-pit-model --train 2023:1 2023:2 2023:3 --horizon 3
-apex-f1 backtest-pit --year 2024 --round 1
-apex-f1 predict-pit --year 2024 --round 1 --lap 20
+apex-f1 fit-pit-model --train 2024:1 2024:2 2024:3 --horizon 3
+apex-f1 backtest-pit --year 2024 --round 4
+apex-f1 predict-pit --year 2024 --round 4 --lap 20
 apex-f1 serve
 ```
 
@@ -68,7 +68,7 @@ Open `http://localhost:8000/replay`. A local model is read from the
 gitignored `data/derived/pit-window-model.json`; raw training race files
 stay in gitignored `data/derived/`. API GET:
 - `/api/v1/opponent/status`: whether a local baseline was fitted.
-- `/api/v1/historical/2024/1/opponent-pit/20`: point-in-time pit frequencies.
+- `/api/v1/historical/2024/4/opponent-pit/20`: point-in-time pit frequencies.
 
 No API call performs training or downloads a new race. When the model is
 missing, API reports that explicitly. Predictions for a training race are
@@ -76,8 +76,8 @@ refused with an explicit 422 error.
 
 ## Out-of-sample validation
 
-The optional `.github/workflows/pit-window-benchmark.yml` imports 2023
-Bahrain/Saudi Arabia/Australia *training races*, then **2024 Bahrain as
+The optional `.github/workflows/pit-window-benchmark.yml` imports 2024
+Bahrain/Saudi Arabia/Australia *training races*, then **2024 Japan as
 holdout**, computes the Brier score against the **training-set global event
 rate**, and uploads only aggregate benchmark results as an artifact.
 

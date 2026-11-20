@@ -82,20 +82,20 @@ python -m pip install -e ".[dev]"
 
 # Public historical OpenF1 research data, never committed:
 for round in 1 2 3; do
-  apex-f1 import-race --year 2023 --round "$round" --provider openf1
+  apex-f1 import-race --year 2024 --round "$round" --provider openf1
 done
-apex-f1 import-race --year 2024 --round 1 --provider openf1
+apex-f1 import-race --year 2024 --round 4 --provider openf1
 
-# Train exclusively on 2023, evaluate Bahrain 2024 as an unseen race:
-apex-f1 fit-pit-model --train 2023:1 2023:2 2023:3
-apex-f1 backtest-pit --year 2024 --round 1
-apex-f1 predict-pit --year 2024 --round 1 --lap 20
+# Train on earlier 2024 rounds only; evaluate unseen Japan (round 4):
+apex-f1 fit-pit-model --train 2024:1 2024:2 2024:3
+apex-f1 backtest-pit --year 2024 --round 4
+apex-f1 predict-pit --year 2024 --round 4 --lap 20
 apex-f1 serve
 ```
 
 Open `http://localhost:8000/replay`, select a lap and inspect the
 Opponent Pit Window panel. All raw timing stays in `data/derived/` locally.
-GitHub Actions measures actual 2024 Bahrain holdout performance and stores
+GitHub Actions measures actual 2024 Japan holdout performance and stores
 **only aggregate benchmark metrics**. The explicit time split protects
 against training on the event being assessed. See [pit baseline methodology](docs/PIT_WINDOW_BASELINE.md).
 

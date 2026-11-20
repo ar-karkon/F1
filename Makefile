@@ -25,5 +25,5 @@ import-history:
 	apex-f1 import-race --year 2024 --round 1 --provider openf1
 
 pit-benchmark:
-	apex-f1 fit-pit-model --train 2023:1 2023:2 2023:3
-	apex-f1 backtest-pit --year 2024 --round 1
+	apex-f1 fit-pit-model --train 2024:1 2024:2 2024:3
+	apex-f1 backtest-pit --year 2024 --round 4
