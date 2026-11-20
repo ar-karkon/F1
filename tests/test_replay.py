@@ -94,4 +94,8 @@ def test_all_snapshots_pass_chronology_verification():
     race = HistoricalRace(2024, 1, rows())
     result = race.verify_chronology()
     assert result["chronological_snapshots_verified"] == 3
-    assert result["records_in_final_snapshot"] == len(rows())
+    # The leader can finish the last lap before a trailing driver.
+    final_leader_cutoff = race.boundaries()[-1]["session_seconds"]
+    expected_visible = sum(r.end_session_seconds <= final_leader_cutoff for r in rows())
+    assert expected_visible == 5
+    assert result["records_in_final_snapshot"] == expected_visible
