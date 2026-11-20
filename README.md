@@ -67,6 +67,29 @@ curl -s -X POST http://127.0.0.1:8000/api/v1/strategy/evaluate \
 
 Output includes expected **remaining seconds**, p10/p90 model bands, expected delta, and probability of being fastest **only among the modelled candidates**. This is not position, podium or victory probability.
 
+## Multi-race calibration & evaluation (OpenF1 historical benchmark)
+
+New: a **frozen post-hoc intercept calibrator** using Japan and China 2024
+after initial training on Bahrain / Saudi Arabia / Australia, with **four
+fully unseen final test races**: Miami, Imola, Monaco and Canada 2024.
+The benchmark compares uncalibrated vs calibrated vs training-only event
+base rate on Brier score, log loss, and 10-bin ECE.
+
+```bash
+for round in 1 2 3 4 5 6 7 8 9; do
+  apex-f1 import-race --year 2024 --round "$round" --provider openf1
+done
+apex-f1 fit-pit-model --train 2024:1 2024:2 2024:3
+apex-f1 fit-pit-calibrator --calibrate 2024:4 2024:5
+apex-f1 evaluate-pit-multi --test 2024:6 2024:7 2024:8 2024:9
+```
+
+This does **not** call your SovInfra key, publish historical lap records,
+or claim any validated live race-strategy capability. The calibration
+can't inspect held-out outcomes, and it is tied to the exact base model
+fingerprint. See [methodology](docs/MULTIRACE_CALIBRATION.md) and the
+[real-data workflow](.github/workflows/multirace-calibration.yml).
+
 ## Opponent Pit Window baseline (empirical historical benchmark)
 
 A CPU-only auditable baseline predicts the frequency of a recorded pit-out-lap flag

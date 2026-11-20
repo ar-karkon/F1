@@ -42,6 +42,14 @@
 
 ## Phase 3 — opponent intelligence
 
+- [x] Implement fixed chronological 2024 multirace calibration split
+  (r1–3 train, r4–5 calibrate, r6–9 final tests).
+- [x] Add separate Brier/log loss/10-bin ECE metrics for raw vs calibrated
+  vs training-only base rate, per race and pooled.
+- [ ] Review actual out-of-sample scores and data issues before promoting
+  the empirical baseline to an operator-facing decision-support feature.
+
+
 - [x] Verify 2024 Japan *holdout* pit-out proxy Brier 0.129186 vs base 0.133608;
   798 overlapping decision windows. See [benchmark report](PIT_WINDOW_BASELINE_BENCHMARK.md).
 - [ ] Resolve weak probability calibration and verify at several independent circuits.

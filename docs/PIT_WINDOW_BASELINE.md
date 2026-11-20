@@ -108,3 +108,12 @@ global training base-rate Brier **0.133608**, 798 overlapping windows.
 The calibration bins indicate substantial mismatch: this is a research
 baseline only. See the [full reproducibility report](PIT_WINDOW_BASELINE_BENCHMARK.md)
 and [successful GitHub run](https://github.com/ar-karkon/F1/actions/runs/44776941827).
+
+## Multi-race calibrated research extension
+
+See [multi-race calibration](MULTIRACE_CALIBRATION.md) for a separate
+fixed calibration split (2024 Japan + China) and four later held-out
+events (Miami, Imola, Monaco and Canada). The calibration stage is a
+logit intercept fitted **only** on earlier calibration events; never
+on the four test events or by an LLM. Raw and calibrated model
+performance must both be reported even if calibration makes it worse.

@@ -75,6 +75,21 @@ def main() -> None:
         if name == "predict-pit":
             command.add_argument("--lap", type=int, required=True)
 
+    calibrate = subparsers.add_parser(
+        "fit-pit-calibrator", help="Fit a frozen calibration intercept on separate races"
+    )
+    calibrate.add_argument("--calibrate", nargs="+", required=True, metavar="YEAR:ROUND")
+    calibrate.add_argument("--model", default=None)
+    calibrate.add_argument("--output", default=None)
+
+    multi = subparsers.add_parser(
+        "evaluate-pit-multi", help="Score frozen raw and calibrated models on later races"
+    )
+    multi.add_argument("--test", nargs="+", required=True, metavar="YEAR:ROUND")
+    multi.add_argument("--model", default=None)
+    multi.add_argument("--calibrator", default=None)
+    multi.add_argument("--output", default=None)
+
     args = parser.parse_args()
     if args.command == "demo":
         print(json.dumps(evaluate_strategies(RaceState(), args.trials, args.seed), indent=2))
@@ -140,6 +155,62 @@ def main() -> None:
         except (OSError, ValueError, TypeError) as exc:
             parser.exit(1, f"Pit model evaluation failed: {exc}\n")
         print(json.dumps(result, indent=2))
+    elif args.command == "fit-pit-calibrator":
+        from pathlib import Path
+
+        from apex_f1.calibration import calibration_file, fit_calibrator
+        from apex_f1.historical_import import race_file
+        from apex_f1.opponent import PitModel, model_file
+        from apex_f1.replay import HistoricalRace
+
+        try:
+            baseline = PitModel.load(Path(args.model) if args.model else model_file())
+            races = []
+            for ref in args.calibrate:
+                year, number = (int(part) for part in ref.split(":"))
+                races.append(HistoricalRace.load(race_file(year, number)))
+            calibrated = fit_calibrator(baseline, races)
+            target = Path(args.output) if args.output else calibration_file()
+            calibrated.save(target)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            parser.exit(1, f"Calibration failed: {exc}\n")
+        print(json.dumps({
+            "mode": "PIT_INTERCEPT_CALIBRATION_FITTED",
+            "calibrator_file": str(target),
+            "training_races": calibrated.model_training_races,
+            "calibration_races": calibrated.calibration_races,
+            "calibration_windows": calibrated.calibration_windows,
+            "calibration_positive": calibrated.calibration_positive,
+            "calibration_intercept": calibrated.intercept,
+            "note": "These are calibration-fit statistics, not test performance.",
+        }, indent=2))
+    elif args.command == "evaluate-pit-multi":
+        from pathlib import Path
+
+        from apex_f1.calibration import InterceptCalibrator, calibration_file, evaluate_races
+        from apex_f1.historical_import import race_file
+        from apex_f1.opponent import PitModel, model_file
+        from apex_f1.replay import HistoricalRace
+
+        try:
+            baseline = PitModel.load(Path(args.model) if args.model else model_file())
+            calibrated = InterceptCalibrator.load(
+                Path(args.calibrator) if args.calibrator else calibration_file()
+            )
+            races = []
+            for ref in args.test:
+                year, number = (int(part) for part in ref.split(":"))
+                races.append(HistoricalRace.load(race_file(year, number)))
+            result = evaluate_races(baseline, calibrated, races)
+            rendered = json.dumps(result, indent=2)
+            if args.output:
+                target = Path(args.output)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(rendered + "\n", encoding="utf-8")
+            else:
+                print(rendered)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            parser.exit(1, f"Multi-race evaluation failed: {exc}\n")
     elif args.command == "import-race":
         from apex_f1.historical_import import import_to_file
         from apex_f1.replay import HistoricalRace
