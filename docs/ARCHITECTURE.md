@@ -24,7 +24,10 @@ FastF1 historical API → fastf1_adapter.py → data/derived/*.json
 - The `/api/v1/` namespace makes future adapters and predictors separable.
 - Model uses paired random samples for all strategies within one Monte Carlo trial.
 - Dashboard is shipped as package data; deployed wheel and Docker both include the page.
-- Four research projects are now pinned under `third_party/` as Git submodules. They are **not** runtime dependencies or integrated adapters; `git submodule update --init` retrieves their source into the workspace.
+- Four research projects are now pinned under `third_party/` as Git submodules; two have optional integration entry points. `git submodule update --init` retrieves their source into the workspace.
+- TUM basic model is executed via `apex_f1.integrations.tum_worker` in an isolated subprocess, with original upstream source and TUM 2017 example parameters; this does NOT share outputs with our toy Monte Carlo.
+- F1-StratLab has only an AST-based source contract probe; its ML agents are NOT executed yet.
+- See [integration progress](INTEGRATION_PROGRESS.md) for the precise status.
 - See [repository strategy](REPOSITORY_STRATEGY.md) for submodule vs subtree vs fork boundaries.
 
 ## Intended modules (not implemented)

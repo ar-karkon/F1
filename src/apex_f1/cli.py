@@ -26,12 +26,26 @@ def main() -> None:
     export.add_argument("--driver", required=True)
     export.add_argument("--output", required=True)
 
+    tum = subparsers.add_parser("tum-compare", help="Run actual TUM 2017 basic reference model")
+    tum.add_argument("--pit-laps", type=int, nargs="+", default=[18, 25, 32])
+    tum.add_argument("--start-compound", choices=["A3", "A4", "A5"], default="A4")
+    tum.add_argument("--next-compound", choices=["A3", "A4", "A5"], default="A3")
+
+    status = subparsers.add_parser("integrations", help="Inspect pinned upstream source readiness")
+
     args = parser.parse_args()
     if args.command == "demo":
         print(json.dumps(evaluate_strategies(RaceState(), args.trials, args.seed), indent=2))
     elif args.command == "serve":
         import uvicorn
         uvicorn.run("apex_f1.api:app", host=args.host, port=args.port)
+    elif args.command == "tum-compare":
+        from apex_f1.integrations.tum_basic import compare_tum_example
+        print(json.dumps(compare_tum_example(args.pit_laps, args.start_compound, args.next_compound), indent=2))
+    elif args.command == "integrations":
+        from apex_f1.integrations.stratlab import probe_stratlab
+        from apex_f1.integrations.tum_basic import probe_tum
+        print(json.dumps({"tum": probe_tum(), "stratlab": probe_stratlab()}, indent=2))
     elif args.command == "export-fastf1":
         from apex_f1.fastf1_adapter import export_driver_laps
         target = export_driver_laps(args.year, args.round, args.session, args.driver, args.output)

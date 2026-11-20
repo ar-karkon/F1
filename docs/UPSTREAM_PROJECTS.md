@@ -4,8 +4,8 @@ Reviewed repository metadata: 2026-11-20. Four projects are **tracked** as Git s
 
 | Project | In F1 repository | Upstream source | Commit pinned | License | Proposed use |
 | --- | --- | --- | --- | --- | --- |
-| TUM Race Simulation | `third_party/race-simulation` | https://github.com/TUMFTM/race-simulation | `96ef2c202198` | LGPL-3.0 | Race strategy / simulation, with license and dependency assessment |
-| F1-StratLab | `third_party/F1-StratLab` | https://github.com/VforVitorio/F1-StratLab | `b65c34e84c8a` | Apache-2.0 | Multi-agent orchestration and replay patterns; upstream active development |
+| TUM Race Simulation | `third_party/race-simulation` | https://github.com/TUMFTM/race-simulation | `96ef2c202198` | LGPL-3.0 | **Basic model adapter added**, in isolated subprocess on original 2017 sample; advanced simulator not integrated |
+| F1-StratLab | `third_party/F1-StratLab` | https://github.com/VforVitorio/F1-StratLab | `b65c34e84c8a` | Apache-2.0 | Static run_lap source contract probe added; ML agents **not executed** |
 | Pit Wall Engineer | `third_party/Pit-Wall-F1-Project` | https://github.com/MarcGuitart/Pit-Wall-F1-Project | `070594892dd7` | MIT | Race engineering UI and telemetry techniques |
 | Motorsport Analytics Pipeline | `third_party/motorsport-analytics-pipeline` | https://github.com/ElSirGuti/motorsport-analytics-pipeline | `f47d319ed6e9` | MIT | Driver telemetry, CSV ingest and analysis |
 

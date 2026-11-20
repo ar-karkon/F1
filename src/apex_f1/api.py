@@ -10,6 +10,13 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from apex_f1 import __version__
+from apex_f1.integrations.stratlab import probe_stratlab
+from apex_f1.integrations.tum_basic import (
+    UpstreamExecutionError,
+    UpstreamUnavailable,
+    compare_tum_example,
+    probe_tum,
+)
 from apex_f1.simulator import RaceState, evaluate_strategies
 
 app = FastAPI(
@@ -58,3 +65,33 @@ def evaluate(body: EvaluateRequest) -> dict:
         return evaluate_strategies(RaceState(**state_fields), trials=body.trials, seed=body.seed)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+class TUMResearchRequest(BaseModel):
+    pit_laps: list[int] = Field(default_factory=lambda: [18, 25, 32], min_length=1, max_length=10)
+    start_compound: Literal["A3", "A4", "A5"] = "A4"
+    next_compound: Literal["A3", "A4", "A5"] = "A3"
+
+
+@app.get("/api/v1/integrations/status")
+def integration_status() -> dict:
+    return {
+        "tum": probe_tum(),
+        "stratlab": probe_stratlab(),
+        "note": "Source presence and source contract are not runtime execution checks.",
+    }
+
+
+@app.post("/api/v1/integrations/tum/compare")
+def tum_compare(body: TUMResearchRequest) -> dict:
+    """Execute the pinned upstream TUM basic model; historical example only."""
+    try:
+        return compare_tum_example(
+            body.pit_laps, body.start_compound, body.next_compound
+        )
+    except UpstreamUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except UpstreamExecutionError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc

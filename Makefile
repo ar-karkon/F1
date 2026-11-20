@@ -1,9 +1,12 @@
-.PHONY: install test lint demo run export-example
+.PHONY: install test upstream-test lint demo run export-example
 install:
 	python -m pip install -e ".[dev]"
 
 test:
-	python -m pytest -q
+	python -m pytest -q --ignore=tests/upstream
+
+upstream-test:
+	python -m pytest -q tests/upstream
 
 lint:
 	ruff check src tests

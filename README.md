@@ -17,6 +17,8 @@
 - An optional historical FastF1 lap export (separate from the synthetic model).
 - Pytest, Ruff CI on Python 3.10 and 3.12, Docker and local CLI.
 - Four pinned upstream projects tracked as Git submodules under `third_party/`, plus licensing notes and evaluation standards.
+- **Executable TUM basic race-time adapter** using original 2017 example parameters in an isolated subprocess (optional NumPy extra).
+- **F1-StratLab source contract probe**, not a running agent integration.
 
 ## Quick start
 
@@ -47,7 +49,9 @@ Test:
 
 ```bash
 ruff check src tests
-pytest -q
+pytest -q --ignore=tests/upstream
+# With TUM+StratLab submodules checked out and `.[tum]` installed:
+pytest -q tests/upstream
 ```
 
 ## API example
@@ -59,6 +63,21 @@ curl -s -X POST http://127.0.0.1:8000/api/v1/strategy/evaluate \
 ```
 
 Output includes expected **remaining seconds**, p10/p90 model bands, expected delta, and probability of being fastest **only among the modelled candidates**. This is not position, podium or victory probability.
+
+## Research integration: execute the original TUM basic model
+
+This integration calls the **original TUM source** at the pinned SHA, in a subprocess, using the **upstream 2017 Yas Marina sample parameters**. This demonstrates real source execution—not a modern F1 prediction. It is independent from the existing synthetic Monte Carlo model.
+
+```bash
+git submodule update --init third_party/race-simulation third_party/F1-StratLab
+python -m pip install -e ".[dev,tum]"
+apex-f1 integrations               # presence/contract checks (NOT runtime results)
+apex-f1 tum-compare --pit-laps 18 25 32
+```
+
+Endpoint: `POST /api/v1/integrations/tum/compare` with `{"pit_laps":[18,25,32]}`. Requires the pinned submodule and NumPy; otherwise reports missing dependencies instead of faking results. A separate [upstream integration CI](.github/workflows/upstream-integration.yml) executes the actual kernel and publishes a comparison JSON artifact.
+
+F1-StratLab is currently **contract-probed only**; no pretrained agent/models are run. See [integration progress](docs/INTEGRATION_PROGRESS.md).
 
 ## Optional: historical FastF1 data
 
@@ -93,6 +112,7 @@ src/apex_f1/
   api.py                  FastAPI service and dashboard
   simulator.py            Synthetic paired Monte Carlo baseline
   fastf1_adapter.py       Optional real historical lap exporter
+  integrations/           Pinned TUM worker and F1-StratLab contract probe
   cli.py                  Local commands
   static/index.html       Interactive strategy dashboard
 tests/                    Simulation and API regression tests
@@ -119,5 +139,6 @@ Open issues should identify the actual dataset, evaluation split, reference base
 - [Development roadmap](docs/ROADMAP.md)
 - [Validation and scientific integrity](docs/VALIDATION.md)
 - [External open-source projects](docs/UPSTREAM_PROJECTS.md)
+- [Integration progress and limits](docs/INTEGRATION_PROGRESS.md)
 
 **License:** MIT for code authored in this repository; upstream packages and datasets retain their own terms. No affiliation with Formula 1 or any team is implied.

@@ -8,7 +8,11 @@
 - [x] Historical FastF1 export utility.
 - [x] Four upstream research repositories linked as pinned Git submodules, with licensing boundaries.
 - [x] Initial remote GitHub CI successfully passed on Python 3.10 and 3.12.
-- [ ] Validate integration of TUM and telemetry pipeline with adapter contract tests.
+- [x] TUM basic full-race kernel adapter in an isolated subprocess, with dedicated upstream CI.
+- [x] F1-StratLab source-level run_lap contract verification (not yet executed).
+- [ ] Verify dedicated upstream CI run and stored JSON artifact.
+- [ ] Execute F1-StratLab no-llm profile in its own isolated environment with historical data.
+- [ ] Validate telemetry pipeline integration with adapter contract tests.
 
 ## Phase 1 — historic race replay
 
