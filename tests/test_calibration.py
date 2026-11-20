@@ -57,7 +57,7 @@ def test_test_races_are_completely_held_out():
     a, b = fitted_pair()
     with pytest.raises(ValueError, match="AFTER calibration"):
         evaluate_races(a, b, [fixture_race(5), fixture_race(6)])
-    with pytest.raises(ValueError, match="later than training"):
+    with pytest.raises(ValueError, match="In-sample race"):
         fit_calibrator(a, [fixture_race(2), fixture_race(4)])
     with pytest.raises(ValueError, match="Duplicate"):
         fit_calibrator(a, [fixture_race(4), fixture_race(4)])
