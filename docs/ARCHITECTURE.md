@@ -24,6 +24,8 @@ FastF1 historical API → fastf1_adapter.py → data/derived/*.json
 - The `/api/v1/` namespace makes future adapters and predictors separable.
 - Model uses paired random samples for all strategies within one Monte Carlo trial.
 - Dashboard is shipped as package data; deployed wheel and Docker both include the page.
+- Four research projects are now pinned under `third_party/` as Git submodules. They are **not** runtime dependencies or integrated adapters; `git submodule update --init` retrieves their source into the workspace.
+- See [repository strategy](REPOSITORY_STRATEGY.md) for submodule vs subtree vs fork boundaries.
 
 ## Intended modules (not implemented)
 

@@ -6,8 +6,9 @@
 - [x] Synthetic strategy engine with fixed-seed Monte Carlo.
 - [x] CPU-only local workflow, tests, CI, Docker.
 - [x] Historical FastF1 export utility.
-- [x] Third-party references with licensing boundaries.
-- [ ] Verify remote CI results after initial push.
+- [x] Four upstream research repositories linked as pinned Git submodules, with licensing boundaries.
+- [x] Initial remote GitHub CI successfully passed on Python 3.10 and 3.12.
+- [ ] Validate integration of TUM and telemetry pipeline with adapter contract tests.
 
 ## Phase 1 — historic race replay
 

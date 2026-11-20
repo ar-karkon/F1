@@ -16,7 +16,7 @@
 - A versioned FastAPI endpoint and OpenAPI docs at `/docs`.
 - An optional historical FastF1 lap export (separate from the synthetic model).
 - Pytest, Ruff CI on Python 3.10 and 3.12, Docker and local CLI.
-- Upstream research catalog, licensing notes, staged roadmap, and evaluation standards.
+- Four pinned upstream projects tracked as Git submodules under `third_party/`, plus licensing notes and evaluation standards.
 
 ## Quick start
 
@@ -25,6 +25,8 @@ Python 3.10+:
 ```bash
 git clone https://github.com/ar-karkon/F1.git
 cd F1
+# Optional: populate pinned research projects under third_party/
+git submodule update --init
 python -m venv .venv
 source .venv/bin/activate      # Windows PowerShell: .venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
@@ -68,13 +70,21 @@ apex-f1 export-fastf1 --year 2024 --round 1 --session R --driver VER \
 
 Exports historical timing, compound, tyre life, and stints. This **does not** train the simulator automatically or claim access to real-time F1 team telemetry. Respect upstream API terms and source data usage rights.
 
-## Optional upstream research checkouts
+## Included upstream research projects (Git submodules)
+
+Four open-source projects are **tracked in this repository as pinned Git submodules** under [third_party/](third_party). GitHub shows links to each external repository at the precise commit recorded by F1; the actual external source is downloaded on checkout, **not copied into F1 Git history**.
 
 ```bash
+# After cloning the repo:
+git submodule update --init
+# Or do it in one command on a fresh clone:
+git clone --recurse-submodules https://github.com/ar-karkon/F1.git
+
+# Compatibility wrapper:
 bash scripts/clone_upstreams.sh
 ```
 
-Downloads three open-source projects into ignored `external/` directories. These are **research references**, not dependencies of the running MVP, and not represented as integrated. No unreviewed upstream source is silently copied into this repository. Review licenses, pin revisions, test interfaces and attribution before integration. See [upstream inventory](docs/UPSTREAM_PROJECTS.md).
+Submodules: TUM Race Simulation (LGPL-3.0), F1-StratLab (Apache-2.0), Pit Wall Engineer (MIT) and Motorsport Analytics Pipeline (MIT). Upstream projects are **not yet installed, executed or integrated with the MVP**. Source modifications require working on a fork or deliberately migrating selected code through a license-reviewed subtree. See [repository layout](docs/REPOSITORY_STRATEGY.md) and [upstream inventory](docs/UPSTREAM_PROJECTS.md).
 
 ## Project map
 
@@ -86,12 +96,13 @@ src/apex_f1/
   cli.py                  Local commands
   static/index.html       Interactive strategy dashboard
 tests/                    Simulation and API regression tests
+third_party/              Four pinned upstream research submodules (optional checkouts)
 docs/
   ARCHITECTURE.md         Data flow and integration interfaces
   ROADMAP.md              Prioritized build plan
   VALIDATION.md           Validation gates and model limitations
   UPSTREAM_PROJECTS.md    Upstream integration and licensing notes
-scripts/clone_upstreams.sh Optional upstream research checkouts
+scripts/clone_upstreams.sh Helper to check out pinned submodules
 ```
 
 ## Why this architecture?
